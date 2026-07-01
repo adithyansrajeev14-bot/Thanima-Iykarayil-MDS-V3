@@ -18,7 +18,6 @@
             --success-green: #10b981;
             --error-red: #ef4444;
             --warning-orange: #f59e0b;
-            --google-blue: #4285f4;
             --gradient-1: linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%);
             --gradient-2: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
@@ -1375,7 +1374,7 @@
         }
 
         // ==========================================
-        // CLOUD CONNECTION CHECK - FIXED FOR CORS
+        // CLOUD CONNECTION CHECK - FIXED
         // ==========================================
         async function checkCloudConnection() {
             const statusDot = document.getElementById('cloudStatusDot');
@@ -1386,13 +1385,12 @@
             statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Checking cloud connection...';
 
             try {
-                // Use fetch with no-cors mode for GET requests
+                // Use fetch with proper mode for Google Apps Script
                 const response = await fetch(googleScriptUrl + '?action=get', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
-                    },
-                    mode: 'cors'
+                    }
                 });
 
                 if (!response.ok) {
@@ -1405,7 +1403,7 @@
                 try {
                     data = JSON.parse(responseText);
                 } catch (e) {
-                    throw new Error('Invalid JSON response from cloud. Please check your Apps Script deployment.');
+                    throw new Error('Invalid JSON response. Please check your Apps Script deployment URL.');
                 }
 
                 if (data && !data.error) {
@@ -1449,7 +1447,7 @@
         }
 
         // ==========================================
-        // CLOUD SYNC - FIXED FOR CORS
+        // CLOUD SYNC - FIXED
         // ==========================================
         async function syncWithCloud() {
             if (isSyncing) return;
@@ -1466,8 +1464,7 @@
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
-                    },
-                    mode: 'cors'
+                    }
                 });
 
                 if (!response.ok) {
@@ -1666,13 +1663,12 @@
 
                 console.log('Sending to cloud:', newRecord);
 
-                // Send to cloud with proper CORS
+                // Send to cloud - Google Apps Script accepts POST with JSON
                 const response = await fetch(googleScriptUrl, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json'
                     },
-                    mode: 'cors',
                     body: JSON.stringify(newRecord)
                 });
 
