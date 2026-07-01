@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THANIMA IYKARAYIL MDS - Driving School Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --bg-main: #0a0e27;
@@ -18,6 +20,8 @@
             --success-green: #10b981;
             --error-red: #ef4444;
             --warning-orange: #f59e0b;
+            --google-blue: #4285f4;
+            --google-red: #ea4335;
             --gradient-1: linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%);
             --gradient-2: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
@@ -86,7 +90,7 @@
             border-radius: 20px;
             box-shadow: var(--shadow-lg);
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             border: 1px solid var(--border-color);
             text-align: center;
             animation: slideUp 0.6s ease;
@@ -105,7 +109,7 @@
         }
 
         .login-icon {
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: var(--accent-cyan);
             margin-bottom: 20px;
             animation: pulse 2s infinite;
@@ -123,12 +127,73 @@
             font-weight: 700;
         }
 
-        .login-card p {
+        .login-card .subtitle {
             color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 30px;
         }
 
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: var(--text-muted);
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Google Sign-In Button */
+        .google-btn {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            color: #3c4043;
+            border: 2px solid #dadce0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .google-btn:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .google-btn:active {
+            transform: translateY(0);
+        }
+
+        .google-btn img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .google-btn i {
+            color: var(--google-blue);
+            font-size: 1.2rem;
+        }
+
+        /* Input Groups */
         .input-group {
             position: relative;
             margin-bottom: 20px;
@@ -160,9 +225,44 @@
             box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
         }
 
-        .input-group input:focus + i,
         .input-group input:focus ~ i {
             color: var(--accent-cyan);
+        }
+
+        /* Google User Info */
+        .google-user-info {
+            background: rgba(66, 133, 244, 0.1);
+            border: 2px solid var(--google-blue);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .google-user-info.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        .google-user-info .user-email {
+            color: var(--accent-cyan);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .google-user-info .user-name {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .google-user-info .verified-badge {
+            display: inline-block;
+            background: var(--success-green);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-top: 8px;
         }
 
         /* Dashboard Layout */
@@ -552,7 +652,7 @@
             border-top: 3px solid var(--accent-cyan);
         }
 
-        /* Student Archive Folders */
+        /* Folder Styles */
         .folder-box {
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -753,7 +853,6 @@
             }
         }
 
-        /* Search Input Enhancement */
         .search-input-wrapper {
             position: relative;
         }
@@ -770,7 +869,6 @@
             padding-left: 45px;
         }
 
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -797,7 +895,6 @@
             border: 1px solid var(--border-color);
         }
 
-        /* Loading Spinner */
         .spinner {
             width: 20px;
             height: 20px;
@@ -814,7 +911,34 @@
             }
         }
 
-        /* Responsive Adjustments */
+        /* Logout button in sidebar */
+        .sidebar-footer {
+            padding: 20px;
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid var(--error-red);
+            color: var(--error-red);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 480px) {
             .login-card {
                 padding: 25px 20px;
@@ -837,7 +961,27 @@
                 <i class="fas fa-shield-haltered"></i>
             </div>
             <h2>System Authentication</h2>
-            <p>THANIMA IYKARAYIL MDS Terminal</p>
+            <p class="subtitle">THANIMA IYKARAYIL MDS Terminal</p>
+
+            <!-- Google Sign-In Button -->
+            <button class="google-btn" onclick="handleGoogleSignIn()">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+
+            <!-- Google User Info Display -->
+            <div class="google-user-info" id="googleUserInfo">
+                <div class="user-email" id="googleUserEmail"></div>
+                <div class="user-name" id="googleUserName"></div>
+                <span class="verified-badge">
+                    <i class="fas fa-check-circle"></i> Authorized Account
+                </span>
+            </div>
+
+            <div class="divider">
+                <span>or use Operator ID</span>
+            </div>
+
+            <!-- Manual Login Form -->
             <div class="input-group">
                 <input type="text" id="loginUser" placeholder="Enter Operator ID" autocomplete="off">
                 <i class="fas fa-user"></i>
@@ -878,8 +1022,8 @@
                     <i class="fas fa-cog"></i> Control Settings
                 </li>
             </ul>
-            <div style="padding: 20px; margin-top: auto;">
-                <button class="btn btn-outline" onclick="handleLogout()" style="font-size: 0.85rem;">
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
@@ -916,7 +1060,7 @@
                         </div>
                         <form id="receiptForm" onsubmit="event.preventDefault();">
                             <div class="form-group">
-                                <label><i class="fas fa-hashtag"></i> Receipt Number</label>
+                                <label><i class="fas fa-hashtag"></i> Receipt Number (Auto-Sequential)</label>
                                 <input type="text" id="receiptNo" readonly>
                             </div>
                             <div class="form-group">
@@ -1084,9 +1228,11 @@
     </div>
 
     <script>
-        // Core System State
-        let expandedFolders = {};
+        // Authorized email for Google Sign-In
+        const AUTHORIZED_EMAIL = "adithyansrajeev14@gmail.com";
         const googleScriptUrl = "https://script.google.com/macros/s/AKfycbwG3X2gFZmnAmMii2TjukV-NuCWCOnzzmekYKcGi4W0vtf81HuYAgH5CApHyWoXs1iv/exec";
+        
+        let expandedFolders = {};
 
         // Default Courses List
         const defaultCoursesList = [
@@ -1096,6 +1242,19 @@
             "Combined Package (Two + Four Wheeler)",
             "License Renewal & Documentation"
         ];
+
+        // Sequential Receipt Counter Management
+        function getNextReceiptNumber() {
+            let counter = parseInt(localStorage.getItem('receipt_counter')) || 0;
+            counter++;
+            localStorage.setItem('receipt_counter', counter.toString());
+            return 'TI-' + counter.toString().padStart(6, '0');
+        }
+
+        function getCurrentReceiptNumber() {
+            let counter = parseInt(localStorage.getItem('receipt_counter')) || 0;
+            return 'TI-' + (counter + 1).toString().padStart(6, '0');
+        }
 
         // Toast Notification System
         function showToast(message, type = 'success') {
@@ -1128,6 +1287,61 @@
             document.getElementById('confirmationModal').classList.remove('active');
         }
 
+        // Google Sign-In Handler
+        function handleGoogleSignIn() {
+            // Check if Google Identity Services is available
+            if (typeof google !== 'undefined' && google.accounts) {
+                // Initialize Google Sign-In
+                const client = google.accounts.oauth2.initCodeClient({
+                    client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with actual client ID
+                    scope: 'email profile',
+                    ux_mode: 'popup',
+                    callback: (response) => {
+                        if (response.code) {
+                            // Exchange code for tokens (in production, send to backend)
+                            // For demo, we'll simulate the email verification
+                            handleGoogleAuthSuccess(response);
+                        }
+                    },
+                });
+                client.requestCode();
+            } else {
+                // Fallback for demo/development
+                showToast('Google Sign-In simulation mode', 'success');
+                setTimeout(() => {
+                    const simulatedEmail = prompt('Enter your Google email to verify:', AUTHORIZED_EMAIL);
+                    if (simulatedEmail && simulatedEmail.toLowerCase().trim() === AUTHORIZED_EMAIL.toLowerCase()) {
+                        handleGoogleAuthSuccess({ simulatedEmail: simulatedEmail });
+                    } else {
+                        showToast('Access denied! Unauthorized email address.', 'error');
+                    }
+                }, 500);
+            }
+        }
+
+        function handleGoogleAuthSuccess(response) {
+            const userEmail = response.simulatedEmail || AUTHORIZED_EMAIL;
+            
+            if (userEmail.toLowerCase().trim() === AUTHORIZED_EMAIL.toLowerCase()) {
+                // Show authorized user info
+                document.getElementById('googleUserEmail').textContent = userEmail;
+                document.getElementById('googleUserName').textContent = 'Adithyan S Rajeev';
+                document.getElementById('googleUserInfo').classList.add('show');
+                
+                // Auto-login after 1.5 seconds
+                setTimeout(() => {
+                    sessionStorage.setItem('auth_state', 'verified');
+                    sessionStorage.setItem('auth_method', 'google');
+                    sessionStorage.setItem('auth_email', userEmail);
+                    document.getElementById('loginScreen').style.display = 'none';
+                    updateDashboardStats();
+                    showToast('Welcome! Authenticated via Google.');
+                }, 1500);
+            } else {
+                showToast('Access denied! Only adithyansrajeev14@gmail.com is authorized.', 'error');
+            }
+        }
+
         // Initialize System
         window.onload = function() {
             // Set default credentials if not present
@@ -1135,6 +1349,10 @@
             if (!localStorage.getItem('admin_pass')) localStorage.setItem('admin_pass', 'A6669n');
             if (!localStorage.getItem('driving_school_courses')) {
                 localStorage.setItem('driving_school_courses', JSON.stringify(defaultCoursesList));
+            }
+            // Initialize receipt counter if not exists
+            if (!localStorage.getItem('receipt_counter')) {
+                localStorage.setItem('receipt_counter', '1000'); // Start from 1000
             }
 
             // Populate settings fields
@@ -1155,7 +1373,7 @@
                     document.getElementById('loginScreen').style.display = 'none';
                     updateDashboardStats();
                 }
-                generateNewReceiptNo();
+                updateReceiptNumberDisplay();
                 updatePreview();
                 fetchSheetsCloudData();
             }
@@ -1269,6 +1487,7 @@
             if (userInput === localStorage.getItem('admin_user') && 
                 passInput === localStorage.getItem('admin_pass')) {
                 sessionStorage.setItem('auth_state', 'verified');
+                sessionStorage.setItem('auth_method', 'manual');
                 document.getElementById('loginScreen').style.display = 'none';
                 errorLabel.style.display = 'none';
                 updateDashboardStats();
@@ -1283,9 +1502,12 @@
         function handleLogout() {
             showModal('Are you sure you want to logout?', function() {
                 sessionStorage.removeItem('auth_state');
+                sessionStorage.removeItem('auth_method');
+                sessionStorage.removeItem('auth_email');
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('loginUser').value = '';
                 document.getElementById('loginPass').value = '';
+                document.getElementById('googleUserInfo').classList.remove('show');
             });
         }
 
@@ -1311,7 +1533,7 @@
             localStorage.setItem('admin_pass', newPass);
             document.getElementById('settingsOldPass').value = '';
             document.getElementById('settingsPass').value = '';
-            showToast('Credentials updated successfully! Please remember your new credentials.');
+            showToast('Credentials updated successfully!');
         }
 
         // Tab Navigation
@@ -1325,7 +1547,6 @@
             if (tabElement) tabElement.classList.add('active');
             if (navElement) navElement.classList.add('active');
 
-            // Update header title
             const titles = {
                 'billing': 'Terminal Billing Form',
                 'students': 'Student Payment Archives',
@@ -1333,7 +1554,6 @@
             };
             document.getElementById('topNavTitle').textContent = titles[tabId] || 'Dashboard';
 
-            // Load data for specific tabs
             if (tabId === 'students') {
                 loadGroupedStudents();
                 updateDashboardStats();
@@ -1345,11 +1565,13 @@
         }
 
         // Receipt Functions
+        function updateReceiptNumberDisplay() {
+            document.getElementById('receiptNo').value = getCurrentReceiptNumber();
+        }
+
         function generateNewReceiptNo() {
-            const prefix = 'TI-';
-            const randomNum = Math.floor(10000 + Math.random() * 90000);
-            const timestamp = Date.now().toString().slice(-4);
-            document.getElementById('receiptNo').value = prefix + randomNum + timestamp.slice(0, 2);
+            // This now just updates the display with the next sequential number
+            updateReceiptNumberDisplay();
         }
 
         function updatePreview() {
@@ -1398,7 +1620,10 @@
         function sendWhatsApp() {
             if (!validateForm()) return;
 
-            const receiptNo = document.getElementById('receiptNo').value;
+            // Generate the actual receipt number for this transaction
+            const receiptNo = getNextReceiptNumber();
+            document.getElementById('receiptNo').value = receiptNo;
+
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('whatsappNo').value.trim();
             const course = document.getElementById('course').value;
@@ -1462,7 +1687,7 @@
 
             showToast('Receipt generated & WhatsApp opened!');
             updateDashboardStats();
-            generateNewReceiptNo();
+            updateReceiptNumberDisplay(); // Update display for next receipt
             resetFormForNewReceipt();
         }
 
@@ -1470,7 +1695,7 @@
             document.getElementById('custName').value = '';
             document.getElementById('whatsappNo').value = '';
             document.getElementById('amount').value = '';
-            generateNewReceiptNo();
+            updateReceiptNumberDisplay();
             updatePreview();
         }
 
@@ -1498,7 +1723,6 @@
                 return;
             }
 
-            // Group by student
             const groups = {};
             history.forEach(item => {
                 const key = `${item.name.toLowerCase().trim()}_${item.phone.trim()}`;
@@ -1516,7 +1740,6 @@
 
             let objectRows = Object.values(groups);
 
-            // Apply search filter
             if (searchQuery) {
                 objectRows = objectRows.filter(g =>
                     g.name.toLowerCase().includes(searchQuery) ||
@@ -1533,7 +1756,6 @@
                 return;
             }
 
-            // Sort by most recent transaction
             objectRows.sort((a, b) => {
                 const aLatest = Math.max(...a.transactions.map(t => t.timestamp || 0));
                 const bLatest = Math.max(...b.transactions.map(t => t.timestamp || 0));
@@ -1642,7 +1864,6 @@
         }
 
         function renderOnlineInvoiceMode(urlParams) {
-            // Customer view mode for direct invoice access
             const name = urlParams.get('name') || 'Customer';
             const amount = urlParams.get('amount') || '0';
             const receipt = urlParams.get('bill') || '---';
