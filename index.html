@@ -6,7 +6,7 @@
     <title>THANIMA IYKARAYIL MDS - Driving School Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== ALL STYLES (same as before) ===== */
+        /* ===== ALL STYLES ===== */
         :root {
             --bg-main: #0a0e27;
             --bg-card: #151d3b;
@@ -71,58 +71,24 @@
                 padding: 30px !important;
                 background: white !important;
                 z-index: 99999 !important;
-                overflow: visible !important;
             }
             .receipt-preview {
                 border: none !important;
                 box-shadow: none !important;
                 padding: 20px !important;
                 background: white !important;
-                max-width: 100% !important;
             }
-            .receipt-preview .receipt-header h2 {
-                color: #0f172a !important;
-                font-size: 24px !important;
-            }
-            .receipt-preview .receipt-total {
-                color: #0f172a !important;
-                font-size: 28px !important;
-            }
-            .receipt-preview .receipt-row {
-                color: #1e293b !important;
-                font-size: 14px !important;
-                border-bottom: 1px dashed #e2e8f0 !important;
-            }
-            .receipt-preview .receipt-row span {
-                color: #1e293b !important;
-            }
-            .btn-container,
-            .db-config-box,
-            .form-split-layout > .panel:first-child,
-            header.dashboard-header,
-            .sidebar-panel,
-            .modal-overlay,
-            .toast,
-            .cloud-error-box,
-            .search-input-wrapper {
+            .btn-container, .db-config-box, .form-split-layout > .panel:first-child,
+            header.dashboard-header, .sidebar-panel, .modal-overlay, .toast,
+            .cloud-error-box, .search-input-wrapper {
                 display: none !important;
             }
-            .form-split-layout {
-                display: block !important;
-            }
+            .form-split-layout { display: block !important; }
             .panel:has(#printReceiptArea) {
                 background: white !important;
                 border: none !important;
-                box-shadow: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                height: auto !important;
-            }
-            .receipt-preview .receipt-header p {
-                color: #475569 !important;
-            }
-            .receipt-preview div[style*="text-align: center"] {
-                color: #94a3b8 !important;
             }
         }
 
@@ -792,20 +758,6 @@
             display: block;
         }
 
-        body.customer-view-mode .sidebar-panel,
-        body.customer-view-mode #loginScreen {
-            display: none !important;
-        }
-
-        body.customer-view-mode .main-content-view {
-            padding: 20px;
-            background: #f8fafc;
-        }
-
-        body.customer-view-mode header.dashboard-header {
-            display: none;
-        }
-
         .toast {
             position: fixed;
             top: 20px;
@@ -1307,9 +1259,9 @@
 
     <script>
         // ==========================================
-        // SHEETDB API ENDPOINT
+        // YOUR NEW SHEETDB URL
         // ==========================================
-        const SHEETDB_URL = "https://sheetdb.io/api/v1/kogc3zhu7zdfl";
+        const SHEETDB_URL = "https://sheetdb.io/api/v1/lfih0c7trxyuf";
         
         // ==========================================
         // CONFIGURATION
@@ -1325,7 +1277,6 @@
         let cloudConnected = false;
         let lastCloudError = '';
         let receiptCounter = 1000;
-        let sheetColumns = [];
 
         const defaultCoursesList = [
             "Fresh Driving Learners License Track",
@@ -1405,7 +1356,7 @@
         }
 
         // ==========================================
-        // FIXED: SHEETDB - FETCH DATA WITH BETTER COLUMN DETECTION
+        // FETCH DATA FROM SHEETDB
         // ==========================================
         async function fetchDataFromSheetDB() {
             const statusDot = document.getElementById('cloudStatusDot');
@@ -1424,109 +1375,36 @@
                 }
                 
                 const data = await response.json();
-                console.log('📊 Raw SheetDB data:', data);
+                console.log('📊 Data from SheetDB:', data);
                 
                 if (data && Array.isArray(data) && data.length > 0) {
-                    // Get ALL column names from the first record
-                    sheetColumns = Object.keys(data[0]);
-                    console.log('✅ Detected columns in sheet:', sheetColumns);
+                    // Map data to our format
+                    cloudDataCache = data.map(record => ({
+                        receiptNo: safeTrim(record.receiptNo || ''),
+                        name: safeTrim(record.name || ''),
+                        phone: safeTrim(record.phone || ''),
+                        course: safeTrim(record.course || ''),
+                        mode: safeTrim(record.mode || ''),
+                        amount: parseFloat(record.amount) || 0,
+                        date: safeTrim(record.date || ''),
+                        time: safeTrim(record.time || ''),
+                        timestamp: parseInt(record.timestamp) || Date.now()
+                    }));
                     
-                    // Show a toast with detected columns for debugging
-                    showToast('📊 Detected columns: ' + sheetColumns.join(', '), 'warning');
-                    
-                    // Map data properly - try multiple column name variations
-                    const sanitizedData = data.map((record, index) => {
-                        const cleanRecord = {};
-                        
-                        // Try to find each field with various possible column names
-                        const findValue = (possibleNames) => {
-                            for (const name of possibleNames) {
-                                if (record[name] !== undefined && record[name] !== null && record[name] !== '') {
-                                    return record[name];
-                                }
-                                // Try case-insensitive
-                                const lowerName = name.toLowerCase();
-                                for (const col of sheetColumns) {
-                                    if (col.toLowerCase() === lowerName) {
-                                        if (record[col] !== undefined && record[col] !== null && record[col] !== '') {
-                                            return record[col];
-                                        }
-                                    }
-                                }
-                            }
-                            return '';
-                        };
-                        
-                        // Map each field with multiple possible column names
-                        cleanRecord.receiptNo = safeTrim(findValue(['receiptNo', 'ReceiptNo', 'receiptno', 'Receiptno', 'RECEIPTNO', 'Receipt Number', 'receipt number']));
-                        cleanRecord.name = safeTrim(findValue(['name', 'Name', 'NAME', 'Student Name', 'student name', 'studentName']));
-                        cleanRecord.phone = safeTrim(findValue(['phone', 'Phone', 'PHONE', 'mobile', 'Mobile', 'MOBILE', 'whatsapp', 'Whatsapp']));
-                        cleanRecord.course = safeTrim(findValue(['course', 'Course', 'COURSE', 'Course Name', 'course name']));
-                        cleanRecord.mode = safeTrim(findValue(['mode', 'Mode', 'MODE', 'payment', 'Payment', 'PAYMENT', 'payment mode']));
-                        cleanRecord.amount = parseFloat(findValue(['amount', 'Amount', 'AMOUNT', 'total', 'Total', 'TOTAL', 'price', 'Price'])) || 0;
-                        cleanRecord.date = safeTrim(findValue(['date', 'Date', 'DATE', 'Date', 'payment date']));
-                        cleanRecord.time = safeTrim(findValue(['time', 'Time', 'TIME', 'Time', 'payment time']));
-                        cleanRecord.timestamp = parseInt(findValue(['timestamp', 'Timestamp', 'TIMESTAMP'])) || Date.now() - (data.length - index) * 1000;
-                        
-                        // If name is still empty, try to use any column that looks like a name
-                        if (!cleanRecord.name) {
-                            for (const col of sheetColumns) {
-                                const lowerCol = col.toLowerCase();
-                                if (lowerCol.includes('name') || lowerCol.includes('student') || lowerCol.includes('person')) {
-                                    cleanRecord.name = safeTrim(record[col]);
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // If phone is still empty, try to use any column that looks like a phone
-                        if (!cleanRecord.phone) {
-                            for (const col of sheetColumns) {
-                                const lowerCol = col.toLowerCase();
-                                if (lowerCol.includes('phone') || lowerCol.includes('mobile') || lowerCol.includes('whatsapp') || lowerCol.includes('contact')) {
-                                    cleanRecord.phone = safeTrim(record[col]);
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // If amount is still 0, try to use any column that looks like an amount
-                        if (cleanRecord.amount === 0) {
-                            for (const col of sheetColumns) {
-                                const lowerCol = col.toLowerCase();
-                                if (lowerCol.includes('amount') || lowerCol.includes('total') || lowerCol.includes('price') || lowerCol.includes('fee')) {
-                                    const val = parseFloat(record[col]);
-                                    if (!isNaN(val) && val > 0) {
-                                        cleanRecord.amount = val;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        console.log(`📝 Record ${index}:`, cleanRecord);
-                        return cleanRecord;
-                    });
-                    
-                    // Filter out completely empty records
-                    const filteredData = sanitizedData.filter(r => r.name || r.phone || r.receiptNo);
-                    console.log('✅ Filtered data:', filteredData);
-                    
-                    cloudDataCache = filteredData;
                     cloudConnected = true;
                     
-                    updateCounterFromCloud(filteredData);
+                    // Update counter
+                    updateCounterFromCloud(cloudDataCache);
                     
                     statusDot.className = 'status-dot online';
-                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + filteredData.length + ' records)';
+                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + cloudDataCache.length + ' records)';
                     hideErrorInUI();
-                    showToast('✅ Loaded ' + filteredData.length + ' records from database!');
+                    showToast('✅ Loaded ' + cloudDataCache.length + ' records from database!');
                 } else {
                     cloudDataCache = [];
                     cloudConnected = true;
                     statusDot.className = 'status-dot online';
                     statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected (No records yet)';
-                    hideErrorInUI();
                     showToast('ℹ️ Database connected, but no records found.', 'warning');
                 }
                 
@@ -1546,74 +1424,17 @@
         }
 
         // ==========================================
-        // SHEETDB - SAVE DATA
+        // SAVE DATA TO SHEETDB
         // ==========================================
         async function saveDataToSheetDB(record) {
             try {
-                // Build the record with proper column names
-                const formattedRecord = {};
-                
-                // Use the column names from the sheet if available
-                if (sheetColumns.length > 0) {
-                    // Map our fields to sheet columns
-                    const fieldMapping = {
-                        receiptNo: ['receiptNo', 'ReceiptNo', 'receiptno'],
-                        name: ['name', 'Name'],
-                        phone: ['phone', 'Phone', 'mobile'],
-                        course: ['course', 'Course'],
-                        mode: ['mode', 'Mode'],
-                        amount: ['amount', 'Amount'],
-                        date: ['date', 'Date'],
-                        time: ['time', 'Time'],
-                        timestamp: ['timestamp', 'Timestamp']
-                    };
-                    
-                    // For each field, find the matching column in the sheet
-                    for (const [field, possibleNames] of Object.entries(fieldMapping)) {
-                        let found = false;
-                        for (const name of possibleNames) {
-                            if (sheetColumns.includes(name)) {
-                                formattedRecord[name] = record[field] || '';
-                                found = true;
-                                break;
-                            }
-                            // Try case-insensitive
-                            for (const col of sheetColumns) {
-                                if (col.toLowerCase() === name.toLowerCase()) {
-                                    formattedRecord[col] = record[field] || '';
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (found) break;
-                        }
-                        // If no matching column found, use the field name itself
-                        if (!found) {
-                            formattedRecord[field] = record[field] || '';
-                        }
-                    }
-                } else {
-                    // Fallback: Use standard lowercase fields
-                    formattedRecord.receiptNo = record.receiptNo || '';
-                    formattedRecord.name = record.name || '';
-                    formattedRecord.phone = record.phone || '';
-                    formattedRecord.course = record.course || '';
-                    formattedRecord.mode = record.mode || '';
-                    formattedRecord.amount = record.amount || 0;
-                    formattedRecord.date = record.date || '';
-                    formattedRecord.time = record.time || '';
-                    formattedRecord.timestamp = record.timestamp || Date.now();
-                }
-                
-                console.log('📤 Sending to SheetDB:', formattedRecord);
-                
                 const response = await fetch(SHEETDB_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(formattedRecord)
+                    body: JSON.stringify(record)
                 });
                 
                 if (!response.ok) {
@@ -1835,15 +1656,13 @@
         }
 
         // ==========================================
-        // FIXED: STUDENT ARCHIVES - BETTER DATA DISPLAY
+        // STUDENT ARCHIVES
         // ==========================================
         function loadGroupedStudents() {
             const history = cloudDataCache || [];
             
             const searchQuery = document.getElementById('historySearch')?.value?.toLowerCase().trim() || '';
             const container = document.getElementById('groupedFoldersContainer');
-
-            console.log('📊 Loading archives with data:', history);
 
             if (history.length === 0) {
                 container.innerHTML = `
@@ -1858,7 +1677,6 @@
                 return;
             }
 
-            // Group by name + phone
             const groups = {};
             history.forEach(item => {
                 const name = safeTrim(item.name) || 'Unknown';
@@ -1910,7 +1728,7 @@
                         <div class="folder-header" onclick="toggleFolder('${folderId}')">
                             <div class="folder-title">
                                 <i class="fas fa-${isOpen ? 'folder-open' : 'folder'}"></i>
-                                ${group.name || 'Unknown'}
+                                ${group.name}
                             </div>
                             <div class="folder-meta">
                                 <span class="count-badge">
@@ -1920,7 +1738,7 @@
                                     <i class="fas fa-rupee-sign"></i> ₹${group.totalPaid.toLocaleString('en-IN')}
                                 </span>
                                 <span class="count-badge">
-                                    <i class="fas fa-phone"></i> ${group.phone || 'N/A'}
+                                    <i class="fas fa-phone"></i> ${group.phone}
                                 </span>
                             </div>
                         </div>
@@ -2233,14 +2051,12 @@
         // INITIALIZATION
         // ==========================================
         window.onload = function() {
-            // Check if this is an online receipt view
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('bill')) {
                 renderOnlineReceiptView(urlParams);
                 return;
             }
 
-            // Initialize localStorage defaults
             if (!localStorage.getItem('admin_user')) localStorage.setItem('admin_user', 'Arun9666');
             if (!localStorage.getItem('admin_pass')) localStorage.setItem('admin_pass', 'A6669n');
             if (!localStorage.getItem('driving_school_courses')) {
@@ -2253,7 +2069,6 @@
 
             renderCourseMenusUI();
 
-            // Add key press animation to login inputs
             document.getElementById('loginUser').addEventListener('keypress', function() {
                 this.classList.add('key-press');
                 setTimeout(() => this.classList.remove('key-press'), 200);
@@ -2263,7 +2078,6 @@
                 setTimeout(() => this.classList.remove('key-press'), 200);
             });
 
-            // Ctrl+P keyboard shortcut
             document.addEventListener('keydown', function(e) {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                     const billingTab = document.getElementById('tab-billing');
@@ -2285,7 +2099,6 @@
                 setTimeout(fetchDataFromSheetDB, 1000);
             }
 
-            // Enter key for login
             document.getElementById('loginPass').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') handleAuthSubmit();
             });
