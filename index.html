@@ -2,52 +2,1655 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THANIMA MDS | Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THANIMA IYKARAYIL MDS - Driving School Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f1f5f9; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; }
-        
-        /* Centered Compact Login */
-        #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-box { background: var(--card); padding: 25px; border-radius: 12px; width: 100%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #334155; border: 1px solid #475569; border-radius: 8px; color: white; font-size: 16px; }
-        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        :root {
+            --bg-main: #0a0e27;
+            --bg-card: #151d3b;
+            --bg-input: #1e2a4a;
+            --accent-cyan: #00d4ff;
+            --accent-blue: #5bc0be;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #2d3a5c;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --warning-orange: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-        #mainUI { display: none; padding: 20px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(91, 192, 190, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Login Screen */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            animation: slideUp 0.6s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+
+        .login-icon {
+            font-size: 3rem;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .login-card h2 {
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background-color: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-light);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .input-group input:focus + i,
+        .input-group input:focus ~ i {
+            color: var(--accent-cyan);
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width: 992px) {
+            .dashboard-container {
+                flex-direction: row;
+            }
+        }
+
+        .sidebar-panel {
+            width: 100%;
+            background: linear-gradient(180deg, #0d1b2a 0%, #0f1d33 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (min-width: 992px) {
+            .sidebar-panel {
+                width: 280px;
+                min-height: 100vh;
+                border-bottom: none;
+                border-right: 1px solid var(--border-color);
+                flex-shrink: 0;
+                position: sticky;
+                top: 0;
+            }
+        }
+
+        .sidebar-brand {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--gradient-1);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-brand h3 {
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-brand p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            -webkit-text-fill-color: var(--text-muted);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 15px;
+            scrollbar-width: none;
+        }
+
+        .sidebar-menu::-webkit-scrollbar {
+            display: none;
+        }
+
+        @media (min-width: 992px) {
+            .sidebar-menu {
+                flex-direction: column;
+                padding: 20px 10px;
+                gap: 8px;
+                overflow-x: visible;
+            }
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 12px;
+            white-space: nowrap;
+            background: transparent;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        @media (min-width: 992px) {
+            .menu-item {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+                border-radius: 12px;
+                white-space: normal;
+            }
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .menu-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-content-view {
+            flex-grow: 1;
+            padding: 20px;
+            width: 100%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @media (min-width: 768px) {
+            .main-content-view {
+                padding: 30px;
+            }
+        }
+
+        header.dashboard-header {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-info h2 {
+            color: var(--accent-cyan);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--bg-input);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-badge .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-badge .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .form-split-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 992px) {
+            .form-split-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            height: fit-content;
+            transition: var(--transition);
+        }
+
+        .panel:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label i {
+            font-size: 1rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-light);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        input[readonly] {
+            background: rgba(0, 212, 255, 0.05);
+            cursor: not-allowed;
+        }
+
+        .db-config-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px dashed var(--success-green);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: var(--gradient-2);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: var(--bg-main);
+        }
+
+        .btn-secondary {
+            background: #4a5568;
+            color: var(--text-light);
+        }
+
+        .btn-danger {
+            background: var(--error-red);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Receipt Preview */
+        .receipt-preview {
+            border: 2px dashed var(--accent-cyan);
+            padding: 25px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            color: #1e293b;
+            word-wrap: break-word;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .receipt-header h2 {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .receipt-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        @media (min-width: 400px) {
+            .receipt-row {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0;
+            }
+        }
+
+        .receipt-total {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-align: right;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 3px solid var(--accent-cyan);
+        }
+
+        /* Student Archive Folders */
+        .folder-box {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            background: #151d33;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .folder-box:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .folder-header {
+            padding: 18px;
+            background: #1f2a4a;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .folder-header:hover {
+            background: #243056;
+        }
+
+        @media (min-width: 600px) {
+            .folder-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .folder-title {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .folder-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+
+        .count-badge,
+        .total-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .total-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success-green);
+            color: var(--success-green);
+        }
+
+        .folder-content {
+            display: none;
+            padding: 20px;
+            background: #0f1626;
+        }
+
+        .folder-content.open {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .nested-payment-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .nested-payment-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .nested-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 576px) {
+            .nested-grid {
+                grid-template-columns: 1fr 1fr auto;
+                align-items: center;
+            }
+        }
+
+        .course-manager-list {
+            margin-top: 20px;
+            list-style: none;
+        }
+
+        .course-manager-item {
+            background: var(--bg-input);
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .course-manager-item:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .settings-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 992px) {
+            .settings-grid-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .tab-page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-page.active {
+            display: block;
+        }
+
+        body.customer-view-mode .sidebar-panel,
+        body.customer-view-mode #loginScreen {
+            display: none !important;
+        }
+
+        body.customer-view-mode .main-content-view {
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        body.customer-view-mode header.dashboard-header {
+            display: none;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--success-green);
+            border-radius: 10px;
+            color: var(--text-light);
+            font-weight: 600;
+            z-index: 100000;
+            animation: slideInRight 0.5s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Search Input Enhancement */
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input-wrapper input {
+            padding-left: 45px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 25px 20px;
+            }
+            .panel {
+                padding: 15px;
+            }
+            .btn {
+                padding: 12px 16px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Login Section -->
+    <!-- Login Screen -->
     <div id="loginScreen">
-        <div class="login-box">
-            <h2 style="margin-bottom:15px; text-align:center;">THANIMA Login</h2>
-            <input type="text" id="user" placeholder="Username">
-            <input type="password" id="pass" placeholder="Password">
-            <button class="btn" onclick="checkLogin()">Login</button>
+        <div class="login-card">
+            <div class="login-icon">
+                <i class="fas fa-shield-haltered"></i>
+            </div>
+            <h2>System Authentication</h2>
+            <p>THANIMA IYKARAYIL MDS Terminal</p>
+            <div class="input-group">
+                <input type="text" id="loginUser" placeholder="Enter Operator ID" autocomplete="off">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPass" placeholder="Enter Passcode" autocomplete="off">
+                <i class="fas fa-lock"></i>
+            </div>
+            <p id="loginError" style="color: var(--error-red); display: none; margin-bottom: 15px; font-weight: 600; font-size: 0.9rem;"></p>
+            <button class="btn btn-primary" onclick="handleAuthSubmit()">
+                <i class="fas fa-unlock-alt"></i> Unlock Workspace
+            </button>
+            <p style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">
+                <i class="fas fa-shield-alt"></i> Secured Government Approved Portal
+            </p>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="mainUI">
-        <h1>Welcome, Admin</h1>
-        <button onclick="location.reload()" style="background:transparent; color:red; border:1px solid red; padding:5px;">Logout</button>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar-panel">
+            <div class="sidebar-brand">
+                <h3>THANIMA IYKARAYIL MDS</h3>
+                <p>Institutional Management Matrix</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" id="nav-billing" onclick="switchConsoleTab('billing')">
+                    <i class="fas fa-receipt"></i> Billing Form
+                </li>
+                <li class="menu-item" id="nav-students" onclick="switchConsoleTab('students')">
+                    <i class="fas fa-folder-tree"></i> Student Archives
+                </li>
+                <li class="menu-item" id="nav-settings" onclick="switchConsoleTab('settings')">
+                    <i class="fas fa-cog"></i> Control Settings
+                </li>
+            </ul>
+            <div style="padding: 20px; margin-top: auto;">
+                <button class="btn btn-outline" onclick="handleLogout()" style="font-size: 0.85rem;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-view">
+            <header class="dashboard-header">
+                <div class="header-info">
+                    <h2 id="topNavTitle">Terminal Billing Form</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <i class="fas fa-certificate"></i> Govt Approved Institution
+                    </p>
+                </div>
+                <div class="header-stats" id="headerStats">
+                    <div class="stat-badge">
+                        <div class="stat-value" id="totalTransactions">0</div>
+                        <div class="stat-label">Total Receipts</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="todayRevenue">₹0</div>
+                        <div class="stat-label">Today's Revenue</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Billing Tab -->
+            <div id="tab-billing" class="tab-page active">
+                <div class="form-split-layout">
+                    <div class="panel">
+                        <div class="db-config-box">
+                            <div class="status-dot"></div>
+                            <div id="dbStatusLabel">Status: Local Memory Active (Cloud Syncing Ready)</div>
+                        </div>
+                        <form id="receiptForm" onsubmit="event.preventDefault();">
+                            <div class="form-group">
+                                <label><i class="fas fa-hashtag"></i> Receipt Number</label>
+                                <input type="text" id="receiptNo" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-user-graduate"></i> Student Name</label>
+                                <input type="text" id="custName" placeholder="Enter student full name" oninput="updatePreview()">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-phone"></i> WhatsApp Mobile Number</label>
+                                <input type="tel" id="whatsappNo" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-graduation-cap"></i> Course Selection Profile</label>
+                                <select id="course" onchange="updatePreview()"></select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-credit-card"></i> Mode of Settlement</label>
+                                <select id="payMode" onchange="updatePreview()">
+                                    <option value="UPI / GooglePay / PhonePe">UPI / GooglePay / PhonePe</option>
+                                    <option value="Cash Handover">Cash Handover</option>
+                                    <option value="Bank NetBanking Transfer">Bank NetBanking Transfer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-rupee-sign"></i> Amount Settled (₹)</label>
+                                <input type="number" id="amount" placeholder="Enter payment amount" min="0" step="1" oninput="updatePreview()">
+                            </div>
+                            <div class="btn-container">
+                                <button type="button" class="btn btn-success" id="submitBtn" onclick="sendWhatsApp()">
+                                    <i class="fas fa-paper-plane"></i> Dispatch Receipt via WhatsApp
+                                </button>
+                                <button type="button" class="btn btn-outline" onclick="resetFormForNewReceipt()">
+                                    <i class="fas fa-plus-circle"></i> Create New Blank Form
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="printReceipt()">
+                                    <i class="fas fa-print"></i> Print Receipt
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="panel" style="background: rgba(255,255,255,0.02);">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">
+                            <i class="fas fa-eye"></i> Live Receipt Preview
+                        </h3>
+                        <div id="printReceiptArea">
+                            <div class="receipt-preview">
+                                <div class="receipt-header">
+                                    <h2 id="previewHeader">THANIMA IYKARAYIL MDS</h2>
+                                    <p style="font-size: 0.9rem; color: #475569; margin-top: 4px;">Govt Reg. Institution</p>
+                                    <p style="font-size: 0.8rem; color: #64748b;">⭐⭐⭐⭐⭐</p>
+                                </div>
+                                <div class="receipt-row">
+                                    <span id="previewReceiptNo" style="font-weight: 600;">Receipt No: --</span>
+                                    <span id="previewDate">Date: --</span>
+                                </div>
+                                <div class="receipt-row" style="margin-top: 20px;">
+                                    <span style="color: #64748b;">Received From:</span>
+                                    <span id="previewName" style="font-weight: 700; text-transform: uppercase;">____________________</span>
+                                </div>
+                                <div class="receipt-row">
+                                    <span style="color: #64748b;">Course Allotted:</span>
+                                    <span id="previewCourse" style="font-weight: 600;">--</span>
+                                </div>
+                                <div class="receipt-row">
+                                    <span style="color: #64748b;">Settlement Mode:</span>
+                                    <span id="previewMode" style="font-weight: 600;">--</span>
+                                </div>
+                                <div class="receipt-total" id="previewAmount">₹ 0</div>
+                                <div style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                                    <i class="fas fa-check-circle" style="color: var(--success-green);"></i> Verified electronic document. No manual signature required.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Tab -->
+            <div id="tab-students" class="tab-page">
+                <div class="panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                        <h3 style="color: var(--accent-cyan);">
+                            <i class="fas fa-archive"></i> Student Payment Archives
+                        </h3>
+                        <button class="btn btn-danger" onclick="clearAllHistory()" style="width: auto;">
+                            <i class="fas fa-trash-alt"></i> Clear All History
+                        </button>
+                    </div>
+                    <div class="search-input-wrapper" style="margin-bottom: 25px;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="historySearch" placeholder="Search archive by student name or phone..." oninput="loadGroupedStudents()">
+                    </div>
+                    <div id="groupedFoldersContainer">
+                        <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                            <p>No records found. Start adding payments to build the archive.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-page">
+                <div class="settings-grid-layout">
+                    <div class="panel">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px;">
+                            <i class="fas fa-lock"></i> Security Credentials
+                        </h3>
+                        <div class="form-group">
+                            <label style="color: var(--error-red);">
+                                <i class="fas fa-key"></i> Verify Current Passcode *
+                            </label>
+                            <input type="password" id="settingsOldPass" placeholder="Enter current passcode">
+                        </div>
+                        <div style="border-top: 2px solid var(--border-color); margin: 25px 0; padding-top: 20px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-user-tag"></i> New Operator ID</label>
+                                <input type="text" id="settingsUser" placeholder="New Username">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> New Passcode</label>
+                                <input type="password" id="settingsPass" placeholder="New Password">
+                            </div>
+                            <button class="btn btn-success" onclick="saveSecurityCredentials()">
+                                <i class="fas fa-save"></i> Update Credentials
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px;">
+                            <i class="fas fa-list-check"></i> Course Management
+                        </h3>
+                        <div class="form-group">
+                            <label><i class="fas fa-plus-circle"></i> Add New Course Option</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="newCourseInput" placeholder="e.g. Manual Car Package">
+                                <button type="button" class="btn btn-success" onclick="addCustomCourseOption()" style="width: auto; padding: 12px 20px;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                        <label style="margin-top: 25px;">
+                            <i class="fas fa-database"></i> Active Course Database
+                        </label>
+                        <ul id="courseConfigurationManagerList" class="course-manager-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmationModal">
+        <div class="modal-content">
+            <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">
+                <i class="fas fa-exclamation-triangle"></i> Confirm Action
+            </h3>
+            <p id="modalMessage" style="margin-bottom: 20px;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" id="modalConfirmBtn">Confirm</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        function checkLogin() {
-            const user = document.getElementById('user').value;
-            const pass = document.getElementById('pass').value;
+        // Core System State
+        let expandedFolders = {};
+        const googleScriptUrl = "https://script.google.com/macros/s/AKfycbwG3X2gFZmnAmMii2TjukV-NuCWCOnzzmekYKcGi4W0vtf81HuYAgH5CApHyWoXs1iv/exec";
 
-            // Simple hardcoded check
-            if(user === "Arun" && pass === "123") {
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainUI').style.display = 'block';
-            } else {
-                alert("Incorrect username or password!");
+        // Default Courses List
+        const defaultCoursesList = [
+            "Fresh Driving Learners License Track",
+            "Two Wheeler Training (Scooter/Motorcycle)",
+            "Four Wheeler Car Training (Manual)",
+            "Combined Package (Two + Four Wheeler)",
+            "License Renewal & Documentation"
+        ];
+
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderColor = type === 'success' ? 'var(--success-green)' : 'var(--error-red)';
+            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // Modal System
+        function showModal(message, confirmCallback) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('modalMessage').textContent = message;
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            confirmBtn.onclick = function() {
+                confirmCallback();
+                closeModal();
+            };
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').classList.remove('active');
+        }
+
+        // Initialize System
+        window.onload = function() {
+            // Set default credentials if not present
+            if (!localStorage.getItem('admin_user')) localStorage.setItem('admin_user', 'Arun9666');
+            if (!localStorage.getItem('admin_pass')) localStorage.setItem('admin_pass', 'A6669n');
+            if (!localStorage.getItem('driving_school_courses')) {
+                localStorage.setItem('driving_school_courses', JSON.stringify(defaultCoursesList));
             }
+
+            // Populate settings fields
+            document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
+            document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
+
+            // Render courses
+            renderCourseMenusUI();
+
+            // Check URL params for customer view
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('bill')) {
+                document.body.classList.add('customer-view-mode');
+                renderOnlineInvoiceMode(urlParams);
+            } else {
+                // Check authentication state
+                if (sessionStorage.getItem('auth_state') === 'verified') {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    updateDashboardStats();
+                }
+                generateNewReceiptNo();
+                updatePreview();
+                fetchSheetsCloudData();
+            }
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'b':
+                            e.preventDefault();
+                            switchConsoleTab('billing');
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            switchConsoleTab('students');
+                            break;
+                        case ',':
+                            e.preventDefault();
+                            switchConsoleTab('settings');
+                            break;
+                    }
+                }
+            });
+
+            // Add enter key support for login
+            document.getElementById('loginPass').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleAuthSubmit();
+            });
+        };
+
+        // Update Dashboard Statistics
+        function updateDashboardStats() {
+            const history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
+            document.getElementById('totalTransactions').textContent = history.length;
+
+            const today = new Date().toLocaleDateString('en-IN');
+            const todayTotal = history
+                .filter(record => record.date === today)
+                .reduce((sum, record) => sum + parseFloat(record.amount || 0), 0);
+            document.getElementById('todayRevenue').textContent = '₹' + todayTotal.toLocaleString('en-IN');
+        }
+
+        // Render Course Menus
+        function renderCourseMenusUI() {
+            const currentCourses = JSON.parse(localStorage.getItem('driving_school_courses')) || defaultCoursesList;
+            const billingSelect = document.getElementById('course');
+            billingSelect.innerHTML = currentCourses.map(course => 
+                `<option value="${course}">${course}</option>`
+            ).join('');
+
+            const managementList = document.getElementById('courseConfigurationManagerList');
+            managementList.innerHTML = currentCourses.map((course, idx) => `
+                <li class="course-manager-item">
+                    <span><i class="fas fa-graduation-cap" style="margin-right: 8px;"></i>${course}</span>
+                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.85rem;" 
+                            onclick="removeCustomCourseOption(${idx})">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </li>
+            `).join('');
+            updatePreview();
+        }
+
+        // Course Management Functions
+        function addCustomCourseOption() {
+            const inputField = document.getElementById('newCourseInput');
+            const newTitle = inputField.value.trim();
+            if (!newTitle) {
+                showToast('Please enter a course name', 'error');
+                return;
+            }
+            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
+            if (courses.includes(newTitle)) {
+                showToast('Course already exists!', 'error');
+                return;
+            }
+            courses.push(newTitle);
+            localStorage.setItem('driving_school_courses', JSON.stringify(courses));
+            inputField.value = '';
+            renderCourseMenusUI();
+            showToast('Course added successfully!');
+        }
+
+        function removeCustomCourseOption(indexPosition) {
+            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
+            if (courses.length <= 1) {
+                showToast('Cannot delete the last course option', 'error');
+                return;
+            }
+            const courseName = courses[indexPosition];
+            showModal(`Are you sure you want to delete "${courseName}"?`, function() {
+                courses.splice(indexPosition, 1);
+                localStorage.setItem('driving_school_courses', JSON.stringify(courses));
+                renderCourseMenusUI();
+                showToast('Course removed successfully');
+            });
+        }
+
+        // Authentication Functions
+        function handleAuthSubmit() {
+            const userInput = document.getElementById('loginUser').value.trim();
+            const passInput = document.getElementById('loginPass').value.trim();
+            const errorLabel = document.getElementById('loginError');
+
+            if (!userInput || !passInput) {
+                errorLabel.innerText = "Please fill in all fields.";
+                errorLabel.style.display = 'block';
+                return;
+            }
+
+            if (userInput === localStorage.getItem('admin_user') && 
+                passInput === localStorage.getItem('admin_pass')) {
+                sessionStorage.setItem('auth_state', 'verified');
+                document.getElementById('loginScreen').style.display = 'none';
+                errorLabel.style.display = 'none';
+                updateDashboardStats();
+                showToast('Welcome back, ' + userInput + '!');
+            } else {
+                errorLabel.innerText = "Invalid Operator Credentials.";
+                errorLabel.style.display = 'block';
+                document.getElementById('loginPass').value = '';
+            }
+        }
+
+        function handleLogout() {
+            showModal('Are you sure you want to logout?', function() {
+                sessionStorage.removeItem('auth_state');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+            });
+        }
+
+        function saveSecurityCredentials() {
+            const oldPassInput = document.getElementById('settingsOldPass').value;
+            const newUser = document.getElementById('settingsUser').value.trim();
+            const newPass = document.getElementById('settingsPass').value.trim();
+
+            if (oldPassInput !== localStorage.getItem('admin_pass')) {
+                showToast('Current passcode incorrect!', 'error');
+                return;
+            }
+            if (!newUser || !newPass) {
+                showToast('Fields cannot be blank!', 'error');
+                return;
+            }
+            if (newPass.length < 4) {
+                showToast('Password must be at least 4 characters!', 'error');
+                return;
+            }
+
+            localStorage.setItem('admin_user', newUser);
+            localStorage.setItem('admin_pass', newPass);
+            document.getElementById('settingsOldPass').value = '';
+            document.getElementById('settingsPass').value = '';
+            showToast('Credentials updated successfully! Please remember your new credentials.');
+        }
+
+        // Tab Navigation
+        function switchConsoleTab(tabId) {
+            document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+            const tabElement = document.getElementById('tab-' + tabId);
+            const navElement = document.getElementById('nav-' + tabId);
+
+            if (tabElement) tabElement.classList.add('active');
+            if (navElement) navElement.classList.add('active');
+
+            // Update header title
+            const titles = {
+                'billing': 'Terminal Billing Form',
+                'students': 'Student Payment Archives',
+                'settings': 'System Control Settings'
+            };
+            document.getElementById('topNavTitle').textContent = titles[tabId] || 'Dashboard';
+
+            // Load data for specific tabs
+            if (tabId === 'students') {
+                loadGroupedStudents();
+                updateDashboardStats();
+            } else if (tabId === 'settings') {
+                document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
+                document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
+                renderCourseMenusUI();
+            }
+        }
+
+        // Receipt Functions
+        function generateNewReceiptNo() {
+            const prefix = 'TI-';
+            const randomNum = Math.floor(10000 + Math.random() * 90000);
+            const timestamp = Date.now().toString().slice(-4);
+            document.getElementById('receiptNo').value = prefix + randomNum + timestamp.slice(0, 2);
+        }
+
+        function updatePreview() {
+            if (document.body.classList.contains('customer-view-mode')) return;
+
+            const receiptNo = document.getElementById('receiptNo').value;
+            const name = document.getElementById('custName').value || '____________________';
+            const course = document.getElementById('course').value || '--';
+            const amount = document.getElementById('amount').value || '0';
+            const mode = document.getElementById('payMode').value;
+            const date = new Date().toLocaleDateString('en-IN', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            document.getElementById('previewReceiptNo').innerText = 'Receipt No: ' + receiptNo;
+            document.getElementById('previewDate').innerText = 'Date: ' + date;
+            document.getElementById('previewName').innerText = name;
+            document.getElementById('previewCourse').innerText = course;
+            document.getElementById('previewMode').innerText = mode;
+            document.getElementById('previewAmount').innerText = '₹ ' + parseFloat(amount).toLocaleString('en-IN');
+        }
+
+        function validateForm() {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('whatsappNo').value.trim();
+            const amount = document.getElementById('amount').value.trim();
+
+            if (!name) {
+                showToast('Please enter student name', 'error');
+                return false;
+            }
+            if (!phone || !/^\d{10}$/.test(phone)) {
+                showToast('Please enter a valid 10-digit mobile number', 'error');
+                return false;
+            }
+            if (!amount || parseFloat(amount) <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        function sendWhatsApp() {
+            if (!validateForm()) return;
+
+            const receiptNo = document.getElementById('receiptNo').value;
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('whatsappNo').value.trim();
+            const course = document.getElementById('course').value;
+            const mode = document.getElementById('payMode').value;
+            const amount = document.getElementById('amount').value.trim();
+            const date = new Date().toLocaleDateString('en-IN', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const time = new Date().toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Save to local storage
+            const newRecord = {
+                receiptNo,
+                name,
+                phone,
+                course,
+                mode,
+                amount: parseFloat(amount),
+                date,
+                time,
+                timestamp: Date.now()
+            };
+
+            let history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
+            history.unshift(newRecord);
+            localStorage.setItem('driving_school_history', JSON.stringify(history));
+
+            // Cloud sync (silent)
+            fetch(googleScriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newRecord)
+            }).catch(err => console.log("Cloud sync queued"));
+
+            // Compose WhatsApp message
+            const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
+                           `_Official Digital Receipt_\n\n` +
+                           `📋 *Receipt No:* ${receiptNo}\n` +
+                           `📅 *Date:* ${date} ${time}\n` +
+                           `👤 *Student:* ${name.toUpperCase()}\n` +
+                           `📚 *Course:* ${course}\n` +
+                           `💳 *Payment Mode:* ${mode}\n\n` +
+                           `💰 *Total Paid: ₹ ${parseFloat(amount).toLocaleString('en-IN')}*\n\n` +
+                           `✅ _Verified Electronic Statement_\n` +
+                           `🏫 Govt Approved Institution`;
+
+            // Open WhatsApp
+            const cleanPhone = phone.replace(/\D/g, '');
+            const formattedPhone = '91' + cleanPhone;
+            window.open(
+                `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`,
+                '_blank'
+            );
+
+            showToast('Receipt generated & WhatsApp opened!');
+            updateDashboardStats();
+            generateNewReceiptNo();
+            resetFormForNewReceipt();
+        }
+
+        function resetFormForNewReceipt() {
+            document.getElementById('custName').value = '';
+            document.getElementById('whatsappNo').value = '';
+            document.getElementById('amount').value = '';
+            generateNewReceiptNo();
+            updatePreview();
+        }
+
+        function printReceipt() {
+            if (!document.getElementById('custName').value.trim()) {
+                showToast('Please fill student details before printing', 'error');
+                return;
+            }
+            window.print();
+        }
+
+        // Student Archives Functions
+        function loadGroupedStudents() {
+            const history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
+            const searchQuery = document.getElementById('historySearch').value.toLowerCase().trim();
+            const container = document.getElementById('groupedFoldersContainer');
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 60px 20px;">
+                        <i class="fas fa-archive" style="font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5;"></i>
+                        <h3>No Records Yet</h3>
+                        <p style="margin-top: 10px;">Start processing payments to build your archive</p>
+                    </div>`;
+                return;
+            }
+
+            // Group by student
+            const groups = {};
+            history.forEach(item => {
+                const key = `${item.name.toLowerCase().trim()}_${item.phone.trim()}`;
+                if (!groups[key]) {
+                    groups[key] = {
+                        name: item.name,
+                        phone: item.phone,
+                        totalPaid: 0,
+                        transactions: []
+                    };
+                }
+                groups[key].transactions.push(item);
+                groups[key].totalPaid += parseFloat(item.amount || 0);
+            });
+
+            let objectRows = Object.values(groups);
+
+            // Apply search filter
+            if (searchQuery) {
+                objectRows = objectRows.filter(g =>
+                    g.name.toLowerCase().includes(searchQuery) ||
+                    g.phone.includes(searchQuery)
+                );
+            }
+
+            if (objectRows.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                        <p>No matching records found for "${searchQuery}"</p>
+                    </div>`;
+                return;
+            }
+
+            // Sort by most recent transaction
+            objectRows.sort((a, b) => {
+                const aLatest = Math.max(...a.transactions.map(t => t.timestamp || 0));
+                const bLatest = Math.max(...b.transactions.map(t => t.timestamp || 0));
+                return bLatest - aLatest;
+            });
+
+            container.innerHTML = objectRows.map((group, idx) => {
+                const folderId = `folder-${idx}`;
+                const isOpen = expandedFolders[folderId];
+
+                return `
+                    <div class="folder-box">
+                        <div class="folder-header" onclick="toggleFolder('${folderId}')">
+                            <div class="folder-title">
+                                <i class="fas fa-${isOpen ? 'folder-open' : 'folder'}"></i>
+                                ${group.name}
+                            </div>
+                            <div class="folder-meta">
+                                <span class="count-badge">
+                                    <i class="fas fa-receipt"></i> ${group.transactions.length} payment${group.transactions.length > 1 ? 's' : ''}
+                                </span>
+                                <span class="total-badge">
+                                    <i class="fas fa-rupee-sign"></i> ${group.totalPaid.toLocaleString('en-IN')}
+                                </span>
+                                <span class="count-badge">
+                                    <i class="fas fa-phone"></i> ${group.phone}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="folder-content ${isOpen ? 'open' : ''}" id="${folderId}">
+                            ${group.transactions.map(tx => `
+                                <div class="nested-payment-card">
+                                    <div class="nested-grid">
+                                        <div>
+                                            <strong style="color: var(--accent-cyan);">Receipt: ${tx.receiptNo}</strong>
+                                            <br><small style="color: var(--text-muted);">${tx.date} ${tx.time || ''}</small>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--accent-blue);">${tx.course}</span>
+                                            <br><small style="color: var(--text-muted);">${tx.mode}</small>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <strong style="color: var(--success-green); font-size: 1.1rem;">₹ ${parseFloat(tx.amount).toLocaleString('en-IN')}</strong>
+                                            <br>
+                                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem; width: auto;" 
+                                                    onclick="resendWhatsApp('${tx.receiptNo}', '${tx.name}', '${tx.phone}', '${tx.course}', '${tx.mode}', '${tx.amount}', '${tx.date}', '${tx.time || ''}')">
+                                                <i class="fas fa-paper-plane"></i> Resend
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleFolder(folderId) {
+            expandedFolders[folderId] = !expandedFolders[folderId];
+            loadGroupedStudents();
+        }
+
+        function resendWhatsApp(receiptNo, name, phone, course, mode, amount, date, time) {
+            const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
+                           `_Official Digital Receipt (Reissued)_\n\n` +
+                           `📋 *Receipt No:* ${receiptNo}\n` +
+                           `📅 *Date:* ${date} ${time}\n` +
+                           `👤 *Student:* ${name.toUpperCase()}\n` +
+                           `📚 *Course:* ${course}\n` +
+                           `💳 *Payment Mode:* ${mode}\n\n` +
+                           `💰 *Total Paid: ₹ ${parseFloat(amount).toLocaleString('en-IN')}*\n\n` +
+                           `✅ _Verified Electronic Statement_\n` +
+                           `🏫 Govt Approved Institution`;
+
+            const cleanPhone = phone.replace(/\D/g, '');
+            const formattedPhone = '91' + cleanPhone;
+            window.open(
+                `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`,
+                '_blank'
+            );
+        }
+
+        function clearAllHistory() {
+            showModal('Are you sure you want to delete ALL payment history? This cannot be undone!', function() {
+                localStorage.removeItem('driving_school_history');
+                loadGroupedStudents();
+                updateDashboardStats();
+                showToast('All history cleared successfully');
+            });
+        }
+
+        // Cloud Sync Functions
+        function fetchSheetsCloudData() {
+            fetch(googleScriptUrl, { method: 'GET', mode: 'no-cors' })
+                .then(response => {
+                    document.getElementById('dbStatusLabel').innerHTML = 
+                        '<i class="fas fa-cloud"></i> Status: Cloud Connection Ready';
+                    document.getElementById('dbStatusLabel').style.color = 'var(--success-green)';
+                })
+                .catch(err => {
+                    console.log("Offline mode active");
+                    document.getElementById('dbStatusLabel').innerHTML = 
+                        '<i class="fas fa-database"></i> Status: Local Mode Active';
+                });
+        }
+
+        function renderOnlineInvoiceMode(urlParams) {
+            // Customer view mode for direct invoice access
+            const name = urlParams.get('name') || 'Customer';
+            const amount = urlParams.get('amount') || '0';
+            const receipt = urlParams.get('bill') || '---';
+
+            document.getElementById('previewName').innerText = name.toUpperCase();
+            document.getElementById('previewAmount').innerText = '₹ ' + parseFloat(amount).toLocaleString('en-IN');
+            document.getElementById('previewReceiptNo').innerText = 'Receipt No: ' + receipt;
+            document.getElementById('previewDate').innerText = 'Date: ' + new Date().toLocaleDateString('en-IN');
         }
     </script>
 </body>
