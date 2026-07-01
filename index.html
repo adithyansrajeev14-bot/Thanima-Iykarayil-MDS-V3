@@ -54,19 +54,15 @@
             z-index: 0;
         }
 
-        /* ===== FIXED: PRINT STYLES ===== */
+        /* ===== PRINT STYLES ===== */
         @media print {
-            /* Hide everything by default */
             body * {
                 visibility: hidden !important;
             }
-            
-            /* Show only the receipt preview area */
             #printReceiptArea,
             #printReceiptArea * {
                 visibility: visible !important;
             }
-            
             #printReceiptArea {
                 position: fixed !important;
                 left: 0 !important;
@@ -77,7 +73,6 @@
                 z-index: 99999 !important;
                 overflow: visible !important;
             }
-            
             .receipt-preview {
                 border: none !important;
                 box-shadow: none !important;
@@ -85,28 +80,22 @@
                 background: white !important;
                 max-width: 100% !important;
             }
-            
             .receipt-preview .receipt-header h2 {
                 color: #0f172a !important;
                 font-size: 24px !important;
             }
-            
             .receipt-preview .receipt-total {
                 color: #0f172a !important;
                 font-size: 28px !important;
             }
-            
             .receipt-preview .receipt-row {
                 color: #1e293b !important;
                 font-size: 14px !important;
                 border-bottom: 1px dashed #e2e8f0 !important;
             }
-            
             .receipt-preview .receipt-row span {
                 color: #1e293b !important;
             }
-            
-            /* Hide all buttons and forms */
             .btn-container,
             .db-config-box,
             .form-split-layout > .panel:first-child,
@@ -118,12 +107,9 @@
             .search-input-wrapper {
                 display: none !important;
             }
-            
-            /* Only show the receipt panel */
             .form-split-layout {
                 display: block !important;
             }
-            
             .panel:has(#printReceiptArea) {
                 background: white !important;
                 border: none !important;
@@ -132,11 +118,9 @@
                 margin: 0 !important;
                 height: auto !important;
             }
-            
             .receipt-preview .receipt-header p {
                 color: #475569 !important;
             }
-            
             .receipt-preview div[style*="text-align: center"] {
                 color: #94a3b8 !important;
             }
@@ -994,7 +978,6 @@
             display: block;
         }
 
-        /* Print receipt button specific style */
         .print-shortcut-hint {
             font-size: 0.7rem;
             color: var(--text-muted);
@@ -1422,7 +1405,7 @@
         }
 
         // ==========================================
-        // SHEETDB - FETCH DATA
+        // FIXED: SHEETDB - FETCH DATA WITH BETTER COLUMN DETECTION
         // ==========================================
         async function fetchDataFromSheetDB() {
             const statusDot = document.getElementById('cloudStatusDot');
@@ -1441,50 +1424,103 @@
                 }
                 
                 const data = await response.json();
-                console.log('SheetDB data:', data);
+                console.log('📊 Raw SheetDB data:', data);
                 
                 if (data && Array.isArray(data) && data.length > 0) {
+                    // Get ALL column names from the first record
                     sheetColumns = Object.keys(data[0]);
-                    console.log('✅ Detected columns:', sheetColumns);
+                    console.log('✅ Detected columns in sheet:', sheetColumns);
                     
-                    const sanitizedData = data.map(record => {
+                    // Show a toast with detected columns for debugging
+                    showToast('📊 Detected columns: ' + sheetColumns.join(', '), 'warning');
+                    
+                    // Map data properly - try multiple column name variations
+                    const sanitizedData = data.map((record, index) => {
                         const cleanRecord = {};
-                        sheetColumns.forEach(col => {
-                            const lowerCol = col.toLowerCase();
-                            const value = record[col] || '';
-                            
-                            if (lowerCol.includes('receipt') || lowerCol.includes('receiptno')) {
-                                cleanRecord.receiptNo = safeTrim(value);
-                            } else if (lowerCol.includes('name')) {
-                                cleanRecord.name = safeTrim(value);
-                            } else if (lowerCol.includes('phone') || lowerCol.includes('mobile')) {
-                                cleanRecord.phone = safeTrim(value);
-                            } else if (lowerCol.includes('course')) {
-                                cleanRecord.course = safeTrim(value);
-                            } else if (lowerCol.includes('mode') || lowerCol.includes('payment')) {
-                                cleanRecord.mode = safeTrim(value);
-                            } else if (lowerCol.includes('amount') || lowerCol.includes('total')) {
-                                cleanRecord.amount = parseFloat(value) || 0;
-                            } else if (lowerCol.includes('date')) {
-                                cleanRecord.date = safeTrim(value);
-                            } else if (lowerCol.includes('time')) {
-                                cleanRecord.time = safeTrim(value);
-                            } else if (lowerCol.includes('timestamp')) {
-                                cleanRecord.timestamp = parseInt(value) || Date.now();
+                        
+                        // Try to find each field with various possible column names
+                        const findValue = (possibleNames) => {
+                            for (const name of possibleNames) {
+                                if (record[name] !== undefined && record[name] !== null && record[name] !== '') {
+                                    return record[name];
+                                }
+                                // Try case-insensitive
+                                const lowerName = name.toLowerCase();
+                                for (const col of sheetColumns) {
+                                    if (col.toLowerCase() === lowerName) {
+                                        if (record[col] !== undefined && record[col] !== null && record[col] !== '') {
+                                            return record[col];
+                                        }
+                                    }
+                                }
                             }
-                        });
+                            return '';
+                        };
+                        
+                        // Map each field with multiple possible column names
+                        cleanRecord.receiptNo = safeTrim(findValue(['receiptNo', 'ReceiptNo', 'receiptno', 'Receiptno', 'RECEIPTNO', 'Receipt Number', 'receipt number']));
+                        cleanRecord.name = safeTrim(findValue(['name', 'Name', 'NAME', 'Student Name', 'student name', 'studentName']));
+                        cleanRecord.phone = safeTrim(findValue(['phone', 'Phone', 'PHONE', 'mobile', 'Mobile', 'MOBILE', 'whatsapp', 'Whatsapp']));
+                        cleanRecord.course = safeTrim(findValue(['course', 'Course', 'COURSE', 'Course Name', 'course name']));
+                        cleanRecord.mode = safeTrim(findValue(['mode', 'Mode', 'MODE', 'payment', 'Payment', 'PAYMENT', 'payment mode']));
+                        cleanRecord.amount = parseFloat(findValue(['amount', 'Amount', 'AMOUNT', 'total', 'Total', 'TOTAL', 'price', 'Price'])) || 0;
+                        cleanRecord.date = safeTrim(findValue(['date', 'Date', 'DATE', 'Date', 'payment date']));
+                        cleanRecord.time = safeTrim(findValue(['time', 'Time', 'TIME', 'Time', 'payment time']));
+                        cleanRecord.timestamp = parseInt(findValue(['timestamp', 'Timestamp', 'TIMESTAMP'])) || Date.now() - (data.length - index) * 1000;
+                        
+                        // If name is still empty, try to use any column that looks like a name
+                        if (!cleanRecord.name) {
+                            for (const col of sheetColumns) {
+                                const lowerCol = col.toLowerCase();
+                                if (lowerCol.includes('name') || lowerCol.includes('student') || lowerCol.includes('person')) {
+                                    cleanRecord.name = safeTrim(record[col]);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // If phone is still empty, try to use any column that looks like a phone
+                        if (!cleanRecord.phone) {
+                            for (const col of sheetColumns) {
+                                const lowerCol = col.toLowerCase();
+                                if (lowerCol.includes('phone') || lowerCol.includes('mobile') || lowerCol.includes('whatsapp') || lowerCol.includes('contact')) {
+                                    cleanRecord.phone = safeTrim(record[col]);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // If amount is still 0, try to use any column that looks like an amount
+                        if (cleanRecord.amount === 0) {
+                            for (const col of sheetColumns) {
+                                const lowerCol = col.toLowerCase();
+                                if (lowerCol.includes('amount') || lowerCol.includes('total') || lowerCol.includes('price') || lowerCol.includes('fee')) {
+                                    const val = parseFloat(record[col]);
+                                    if (!isNaN(val) && val > 0) {
+                                        cleanRecord.amount = val;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        console.log(`📝 Record ${index}:`, cleanRecord);
                         return cleanRecord;
                     });
                     
-                    cloudDataCache = sanitizedData;
+                    // Filter out completely empty records
+                    const filteredData = sanitizedData.filter(r => r.name || r.phone || r.receiptNo);
+                    console.log('✅ Filtered data:', filteredData);
+                    
+                    cloudDataCache = filteredData;
                     cloudConnected = true;
                     
-                    updateCounterFromCloud(sanitizedData);
+                    updateCounterFromCloud(filteredData);
                     
                     statusDot.className = 'status-dot online';
-                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + sanitizedData.length + ' records)';
+                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + filteredData.length + ' records)';
                     hideErrorInUI();
-                    showToast('✅ Loaded ' + sanitizedData.length + ' records from database!');
+                    showToast('✅ Loaded ' + filteredData.length + ' records from database!');
                 } else {
                     cloudDataCache = [];
                     cloudConnected = true;
@@ -1499,7 +1535,7 @@
                 updateReceiptNumberDisplay();
                 
             } catch (error) {
-                console.error('Fetch error:', error);
+                console.error('❌ Fetch error:', error);
                 cloudConnected = false;
                 statusDot.className = 'status-dot offline';
                 const errorMsg = 'Database error: ' + error.message;
@@ -1514,48 +1550,50 @@
         // ==========================================
         async function saveDataToSheetDB(record) {
             try {
-                if (sheetColumns.length === 0) {
-                    const checkResponse = await fetch(SHEETDB_URL);
-                    if (checkResponse.ok) {
-                        const checkData = await checkResponse.json();
-                        if (checkData && checkData.length > 0) {
-                            sheetColumns = Object.keys(checkData[0]);
-                        }
-                    }
-                }
-                
+                // Build the record with proper column names
                 const formattedRecord = {};
                 
+                // Use the column names from the sheet if available
                 if (sheetColumns.length > 0) {
-                    sheetColumns.forEach(col => {
-                        const lowerCol = col.toLowerCase();
-                        let value = '';
-                        
-                        if (lowerCol.includes('receipt')) {
-                            value = record.receiptNo || '';
-                        } else if (lowerCol.includes('name')) {
-                            value = record.name || '';
-                        } else if (lowerCol.includes('phone') || lowerCol.includes('mobile')) {
-                            value = record.phone || '';
-                        } else if (lowerCol.includes('course')) {
-                            value = record.course || '';
-                        } else if (lowerCol.includes('mode') || lowerCol.includes('payment')) {
-                            value = record.mode || '';
-                        } else if (lowerCol.includes('amount') || lowerCol.includes('total')) {
-                            value = record.amount || 0;
-                        } else if (lowerCol.includes('date')) {
-                            value = record.date || '';
-                        } else if (lowerCol.includes('time')) {
-                            value = record.time || '';
-                        } else if (lowerCol.includes('timestamp')) {
-                            value = record.timestamp || Date.now();
+                    // Map our fields to sheet columns
+                    const fieldMapping = {
+                        receiptNo: ['receiptNo', 'ReceiptNo', 'receiptno'],
+                        name: ['name', 'Name'],
+                        phone: ['phone', 'Phone', 'mobile'],
+                        course: ['course', 'Course'],
+                        mode: ['mode', 'Mode'],
+                        amount: ['amount', 'Amount'],
+                        date: ['date', 'Date'],
+                        time: ['time', 'Time'],
+                        timestamp: ['timestamp', 'Timestamp']
+                    };
+                    
+                    // For each field, find the matching column in the sheet
+                    for (const [field, possibleNames] of Object.entries(fieldMapping)) {
+                        let found = false;
+                        for (const name of possibleNames) {
+                            if (sheetColumns.includes(name)) {
+                                formattedRecord[name] = record[field] || '';
+                                found = true;
+                                break;
+                            }
+                            // Try case-insensitive
+                            for (const col of sheetColumns) {
+                                if (col.toLowerCase() === name.toLowerCase()) {
+                                    formattedRecord[col] = record[field] || '';
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) break;
                         }
-                        
-                        if (value !== '') {
-                            formattedRecord[col] = value;
+                        // If no matching column found, use the field name itself
+                        if (!found) {
+                            formattedRecord[field] = record[field] || '';
                         }
-                    });
+                    }
                 } else {
+                    // Fallback: Use standard lowercase fields
                     formattedRecord.receiptNo = record.receiptNo || '';
                     formattedRecord.name = record.name || '';
                     formattedRecord.phone = record.phone || '';
@@ -1788,26 +1826,24 @@
             updatePreview();
         }
 
-        // ==========================================
-        // FIXED: PRINT RECEIPT FUNCTION WITH CTRL+P
-        // ==========================================
         function printReceipt() {
             if (!document.getElementById('custName').value.trim()) {
                 showToast('Please fill name details before printing', 'error');
                 return;
             }
-            // Just trigger the browser's print dialog
             window.print();
         }
 
         // ==========================================
-        // STUDENT ARCHIVES
+        // FIXED: STUDENT ARCHIVES - BETTER DATA DISPLAY
         // ==========================================
         function loadGroupedStudents() {
             const history = cloudDataCache || [];
             
             const searchQuery = document.getElementById('historySearch')?.value?.toLowerCase().trim() || '';
             const container = document.getElementById('groupedFoldersContainer');
+
+            console.log('📊 Loading archives with data:', history);
 
             if (history.length === 0) {
                 container.innerHTML = `
@@ -1822,16 +1858,17 @@
                 return;
             }
 
+            // Group by name + phone
             const groups = {};
             history.forEach(item => {
-                const name = safeTrim(item.name);
-                const phone = safeTrim(item.phone);
+                const name = safeTrim(item.name) || 'Unknown';
+                const phone = safeTrim(item.phone) || 'No Phone';
                 const key = `${name.toLowerCase()}_${phone}`;
                 
                 if (!groups[key]) {
                     groups[key] = {
-                        name: name || 'Unknown',
-                        phone: phone || 'N/A',
+                        name: name,
+                        phone: phone,
                         totalPaid: 0,
                         transactions: []
                     };
@@ -1873,17 +1910,17 @@
                         <div class="folder-header" onclick="toggleFolder('${folderId}')">
                             <div class="folder-title">
                                 <i class="fas fa-${isOpen ? 'folder-open' : 'folder'}"></i>
-                                ${group.name}
+                                ${group.name || 'Unknown'}
                             </div>
                             <div class="folder-meta">
                                 <span class="count-badge">
                                     <i class="fas fa-receipt"></i> ${group.transactions.length} payment${group.transactions.length > 1 ? 's' : ''}
                                 </span>
                                 <span class="total-badge">
-                                    <i class="fas fa-rupee-sign"></i> ${group.totalPaid.toLocaleString('en-IN')}
+                                    <i class="fas fa-rupee-sign"></i> ₹${group.totalPaid.toLocaleString('en-IN')}
                                 </span>
                                 <span class="count-badge">
-                                    <i class="fas fa-phone"></i> ${group.phone}
+                                    <i class="fas fa-phone"></i> ${group.phone || 'N/A'}
                                 </span>
                             </div>
                         </div>
@@ -1892,12 +1929,12 @@
                                 <div class="nested-payment-card">
                                     <div class="nested-grid">
                                         <div>
-                                            <strong style="color: var(--accent-cyan);">Receipt: ${safeTrim(tx.receiptNo)}</strong>
-                                            <br><small style="color: var(--text-muted);">${safeTrim(tx.date)} ${safeTrim(tx.time || '')}</small>
+                                            <strong style="color: var(--accent-cyan);">${safeTrim(tx.receiptNo) || 'No Receipt'}</strong>
+                                            <br><small style="color: var(--text-muted);">${safeTrim(tx.date) || ''} ${safeTrim(tx.time || '')}</small>
                                         </div>
                                         <div>
-                                            <span style="color: var(--accent-blue);">${safeTrim(tx.course)}</span>
-                                            <br><small style="color: var(--text-muted);">${safeTrim(tx.mode)}</small>
+                                            <span style="color: var(--accent-blue);">${safeTrim(tx.course) || 'No Course'}</span>
+                                            <br><small style="color: var(--text-muted);">${safeTrim(tx.mode) || 'No Mode'}</small>
                                         </div>
                                         <div style="text-align: right;">
                                             <strong style="color: var(--success-green); font-size: 1.1rem;">₹ ${parseFloat(tx.amount || 0).toLocaleString('en-IN')}</strong>
@@ -2226,26 +2263,17 @@
                 setTimeout(() => this.classList.remove('key-press'), 200);
             });
 
-            // ===== FIX: CTRL+P KEYBOARD SHORTCUT =====
+            // Ctrl+P keyboard shortcut
             document.addEventListener('keydown', function(e) {
-                // Ctrl+P or Cmd+P
                 if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                    // Check if user is on billing tab and form has data
                     const billingTab = document.getElementById('tab-billing');
                     if (billingTab && billingTab.classList.contains('active')) {
                         const name = document.getElementById('custName').value.trim();
-                        if (name) {
-                            // Allow the print dialog to open naturally
-                            // We don't need to prevent default - it will open print dialog
-                            // But we want to make sure the receipt is printed
-                            console.log('Ctrl+P pressed - printing receipt');
-                        } else {
-                            // Prevent print if no name entered
+                        if (!name) {
                             e.preventDefault();
                             showToast('Please fill name before printing', 'error');
                         }
                     }
-                    // If on students tab or other tabs, allow normal print behavior
                 }
             });
 
