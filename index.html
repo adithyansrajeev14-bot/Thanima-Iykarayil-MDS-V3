@@ -54,6 +54,56 @@
             z-index: 0;
         }
 
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printReceiptArea,
+            #printReceiptArea * {
+                visibility: visible;
+            }
+            #printReceiptArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white;
+            }
+            .receipt-preview {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 10px !important;
+            }
+            .dashboard-container,
+            .sidebar-panel,
+            .main-content-view,
+            header.dashboard-header,
+            .panel:not(:has(#printReceiptArea)),
+            .btn-container,
+            .db-config-box,
+            .form-split-layout > .panel:first-child {
+                display: none !important;
+            }
+            .form-split-layout {
+                display: block !important;
+            }
+            .panel:has(#printReceiptArea) {
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .receipt-preview .receipt-header h2 {
+                color: #0f172a !important;
+            }
+            .receipt-preview .receipt-total {
+                color: #0f172a !important;
+            }
+        }
+
         #loginScreen {
             position: fixed;
             top: 0;
@@ -1261,28 +1311,20 @@
         function playLoginSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Create a success sound - ascending tones
-                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-                
+                const notes = [523.25, 659.25, 783.99];
                 notes.forEach((freq, index) => {
                     const oscillator = audioCtx.createOscillator();
                     const gainNode = audioCtx.createGain();
-                    
                     oscillator.connect(gainNode);
                     gainNode.connect(audioCtx.destination);
-                    
                     oscillator.frequency.value = freq;
                     oscillator.type = 'sine';
-                    
                     gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime + index * 0.1);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + index * 0.1 + 0.2);
-                    
                     oscillator.start(audioCtx.currentTime + index * 0.1);
                     oscillator.stop(audioCtx.currentTime + index * 0.1 + 0.2);
                 });
             } catch (e) {
-                // Silently fail if audio is not supported
                 console.log('Audio not supported');
             }
         }
@@ -1290,21 +1332,15 @@
         function playErrorSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Create an error sound - descending harsh tone
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                
                 oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
                 oscillator.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.3);
                 oscillator.type = 'sawtooth';
-                
                 gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                
                 oscillator.start(audioCtx.currentTime);
                 oscillator.stop(audioCtx.currentTime + 0.3);
             } catch (e) {
@@ -1339,7 +1375,7 @@
         }
 
         // ==========================================
-        // CLOUD CONNECTION CHECK
+        // CLOUD CONNECTION CHECK - FIXED FOR CORS
         // ==========================================
         async function checkCloudConnection() {
             const statusDot = document.getElementById('cloudStatusDot');
@@ -1350,18 +1386,18 @@
             statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Checking cloud connection...';
 
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
+                // Use fetch with no-cors mode for GET requests
                 const response = await fetch(googleScriptUrl + '?action=get', {
                     method: 'GET',
-                    signal: controller.signal,
                     headers: {
                         'Accept': 'application/json'
-                    }
+                    },
+                    mode: 'cors'
                 });
 
-                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
 
                 const responseText = await response.text();
                 let data;
@@ -1369,7 +1405,7 @@
                 try {
                     data = JSON.parse(responseText);
                 } catch (e) {
-                    throw new Error('Invalid JSON response from cloud');
+                    throw new Error('Invalid JSON response from cloud. Please check your Apps Script deployment.');
                 }
 
                 if (data && !data.error) {
@@ -1390,11 +1426,11 @@
                 statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
                 showErrorInUI(errorMsg);
                 
-                // Load from cache if available, otherwise show empty
                 cloudDataCache = [];
                 loadGroupedStudents();
                 updateDashboardStats();
                 updateReceiptNumberDisplay();
+                showToast('❌ ' + errorMsg, 'error');
             }
         }
 
@@ -1405,7 +1441,7 @@
             try {
                 const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
                 const shortUrl = await response.text();
-                return shortUrl.trim();
+                return shortUrl.trim() || longUrl;
             } catch (error) {
                 console.error('URL shortening failed:', error);
                 return longUrl;
@@ -1413,7 +1449,7 @@
         }
 
         // ==========================================
-        // CLOUD SYNC
+        // CLOUD SYNC - FIXED FOR CORS
         // ==========================================
         async function syncWithCloud() {
             if (isSyncing) return;
@@ -1426,18 +1462,17 @@
             statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Syncing with Cloud...';
 
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
-
                 const response = await fetch(googleScriptUrl + '?action=get', {
                     method: 'GET',
-                    signal: controller.signal,
                     headers: {
                         'Accept': 'application/json'
-                    }
+                    },
+                    mode: 'cors'
                 });
 
-                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
 
                 const responseText = await response.text();
                 let cloudData;
@@ -1445,7 +1480,7 @@
                 try {
                     cloudData = JSON.parse(responseText);
                 } catch (e) {
-                    throw new Error('Invalid JSON from cloud');
+                    throw new Error('Invalid JSON from cloud. Please check your Apps Script.');
                 }
 
                 if (cloudData && !cloudData.error) {
@@ -1470,7 +1505,6 @@
                     cloudDataCache = cloudData;
                     cloudConnected = true;
                     
-                    // Update counter from cloud data
                     updateCounterFromCloud(cloudData);
                     
                     statusDot.className = 'status-dot online';
@@ -1520,6 +1554,7 @@
             });
 
             receiptCounter = Math.max(1000, maxNumber);
+            localStorage.setItem('receipt_counter', receiptCounter.toString());
         }
 
         // ==========================================
@@ -1527,6 +1562,7 @@
         // ==========================================
         function getNextReceiptNumber() {
             receiptCounter++;
+            localStorage.setItem('receipt_counter', receiptCounter.toString());
             return 'TI-' + receiptCounter.toString().padStart(6, '0');
         }
 
@@ -1581,8 +1617,10 @@
             return true;
         }
 
+        // ==========================================
+        // SEND WHATSAPP - FIXED POST REQUEST
+        // ==========================================
         async function sendWhatsApp() {
-            // Check cloud connection first
             if (!cloudConnected) {
                 showToast('❌ Cannot generate receipt: Cloud is offline. Please check your connection.', 'error');
                 return;
@@ -1626,26 +1664,34 @@
                     timestamp: Date.now()
                 };
 
-                // Send to cloud
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                console.log('Sending to cloud:', newRecord);
 
+                // Send to cloud with proper CORS
                 const response = await fetch(googleScriptUrl, {
                     method: 'POST',
-                    signal: controller.signal,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors',
                     body: JSON.stringify(newRecord)
                 });
 
-                clearTimeout(timeoutId);
+                console.log('Response status:', response.status);
 
                 if (!response.ok) {
-                    throw new Error('Cloud save failed with status: ' + response.status);
+                    const errorText = await response.text();
+                    throw new Error('Cloud save failed: ' + response.status + ' - ' + errorText);
+                }
+
+                const result = await response.json();
+                console.log('Cloud response:', result);
+
+                if (result.error) {
+                    throw new Error(result.error);
                 }
 
                 // Update local cache
                 cloudDataCache = [newRecord, ...cloudDataCache];
-                updateCounterFromCloud(cloudDataCache);
 
                 // Generate online receipt link
                 const receiptUrl = `${BASE_URL}?bill=${receiptNo}&name=${encodeURIComponent(name)}&amount=${amount}&course=${encodeURIComponent(course)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}`;
@@ -1949,7 +1995,6 @@
 
             if (userInput === localStorage.getItem('admin_user') && 
                 passInput === localStorage.getItem('admin_pass')) {
-                // Play success sound
                 playLoginSound();
                 
                 sessionStorage.setItem('auth_state', 'verified');
