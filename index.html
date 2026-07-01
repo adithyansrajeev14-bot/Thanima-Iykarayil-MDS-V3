@@ -1,39 +1,2229 @@
-function doGet(e) {
-  try {
-    var action = e.parameter.action || 'get';
-    var callback = e.parameter.callback; // For JSONP
-    
-    var result;
-    if (action === 'ping') {
-      result = { status: 'ok', message: 'Cloud is online' };
-    } else if (action === 'get') {
-      result = getAllRecords();
-    } else {
-      result = { error: 'Invalid action' };
-    }
-    
-    var json = JSON.stringify(result);
-    
-    // If callback is provided, wrap in JSONP
-    if (callback) {
-      return ContentService
-        .createTextOutput(callback + '(' + json + ')')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    } else {
-      return ContentService
-        .createTextOutput(json)
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  } catch (error) {
-    var errorJson = JSON.stringify({ error: error.toString() });
-    if (e && e.parameter && e.parameter.callback) {
-      return ContentService
-        .createTextOutput(e.parameter.callback + '(' + errorJson + ')')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    } else {
-      return ContentService
-        .createTextOutput(errorJson)
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THANIMA IYKARAYIL MDS - Driving School Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== ALL STYLES (same as previous version) ===== */
+        :root {
+            --bg-main: #0a0e27;
+            --bg-card: #151d3b;
+            --bg-input: #1e2a4a;
+            --accent-cyan: #00d4ff;
+            --accent-blue: #5bc0be;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #2d3a5c;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --warning-orange: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%);
+            --gradient-2: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(91, 192, 190, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printReceiptArea,
+            #printReceiptArea * {
+                visibility: visible;
+            }
+            #printReceiptArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white;
+            }
+            .receipt-preview {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 10px !important;
+            }
+            .dashboard-container,
+            .sidebar-panel,
+            .main-content-view,
+            header.dashboard-header,
+            .panel:not(:has(#printReceiptArea)),
+            .btn-container,
+            .db-config-box,
+            .form-split-layout > .panel:first-child {
+                display: none !important;
+            }
+            .form-split-layout {
+                display: block !important;
+            }
+            .panel:has(#printReceiptArea) {
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .receipt-preview .receipt-header h2 {
+                color: #0f172a !important;
+            }
+            .receipt-preview .receipt-total {
+                color: #0f172a !important;
+            }
+        }
+
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes keyPress {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 440px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            animation: slideUp 0.6s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+
+        .login-icon {
+            font-size: 3.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .login-card h2 {
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .login-card .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background-color: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-light);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .input-group input.key-press {
+            animation: keyPress 0.15s ease;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (min-width: 992px) {
+            .dashboard-container {
+                flex-direction: row;
+            }
+        }
+
+        .sidebar-panel {
+            width: 100%;
+            background: linear-gradient(180deg, #0d1b2a 0%, #0f1d33 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (min-width: 992px) {
+            .sidebar-panel {
+                width: 280px;
+                min-height: 100vh;
+                border-bottom: none;
+                border-right: 1px solid var(--border-color);
+                flex-shrink: 0;
+                position: sticky;
+                top: 0;
+            }
+        }
+
+        .sidebar-brand {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-brand h3 {
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-brand p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 15px;
+            scrollbar-width: none;
+        }
+
+        .sidebar-menu::-webkit-scrollbar {
+            display: none;
+        }
+
+        @media (min-width: 992px) {
+            .sidebar-menu {
+                flex-direction: column;
+                padding: 20px 10px;
+                gap: 8px;
+                overflow-x: visible;
+            }
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 12px;
+            white-space: nowrap;
+            background: transparent;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @media (min-width: 992px) {
+            .menu-item {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+                border-radius: 12px;
+                white-space: normal;
+            }
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .menu-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-content-view {
+            flex-grow: 1;
+            padding: 20px;
+            width: 100%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @media (min-width: 768px) {
+            .main-content-view {
+                padding: 30px;
+            }
+        }
+
+        header.dashboard-header {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-info h2 {
+            color: var(--accent-cyan);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--bg-input);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-badge .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-badge .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .form-split-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 992px) {
+            .form-split-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            height: fit-content;
+            transition: var(--transition);
+        }
+
+        .panel:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-light);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        input[readonly] {
+            background: rgba(0, 212, 255, 0.05);
+            cursor: not-allowed;
+        }
+
+        .db-config-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px dashed var(--success-green);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: var(--success-green);
+        }
+
+        .status-dot.offline {
+            background: var(--error-red);
+        }
+
+        .status-dot.syncing {
+            background: var(--warning-orange);
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: var(--gradient-2);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: var(--bg-main);
+        }
+
+        .btn-secondary {
+            background: #4a5568;
+            color: var(--text-light);
+        }
+
+        .btn-danger {
+            background: var(--error-red);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .receipt-preview {
+            border: 2px dashed var(--accent-cyan);
+            padding: 25px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            color: #1e293b;
+            word-wrap: break-word;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .receipt-header h2 {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .receipt-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        @media (min-width: 400px) {
+            .receipt-row {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0;
+            }
+        }
+
+        .receipt-total {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-align: right;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 3px solid var(--accent-cyan);
+        }
+
+        .folder-box {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            background: #151d33;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .folder-box:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .folder-header {
+            padding: 18px;
+            background: #1f2a4a;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .folder-header:hover {
+            background: #243056;
+        }
+
+        @media (min-width: 600px) {
+            .folder-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .folder-title {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .folder-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+
+        .count-badge,
+        .total-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .total-badge {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success-green);
+            color: var(--success-green);
+        }
+
+        .folder-content {
+            display: none;
+            padding: 20px;
+            background: #0f1626;
+        }
+
+        .folder-content.open {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nested-payment-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .nested-payment-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .nested-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 576px) {
+            .nested-grid {
+                grid-template-columns: 1fr 1fr auto;
+                align-items: center;
+            }
+        }
+
+        .course-manager-list {
+            margin-top: 20px;
+            list-style: none;
+        }
+
+        .course-manager-item {
+            background: var(--bg-input);
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .course-manager-item:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .settings-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 992px) {
+            .settings-grid-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .tab-page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-page.active {
+            display: block;
+        }
+
+        body.customer-view-mode .sidebar-panel,
+        body.customer-view-mode #loginScreen {
+            display: none !important;
+        }
+
+        body.customer-view-mode .main-content-view {
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        body.customer-view-mode header.dashboard-header {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--success-green);
+            border-radius: 10px;
+            color: var(--text-light);
+            font-weight: 600;
+            z-index: 100000;
+            animation: slideInRight 0.5s ease;
+            box-shadow: var(--shadow-lg);
+            max-width: 90%;
+        }
+
+        .toast.error {
+            border-color: var(--error-red);
+        }
+
+        .toast.warning {
+            border-color: var(--warning-orange);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input-wrapper input {
+            padding-left: 45px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid var(--error-red);
+            color: var(--error-red);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .sync-spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .online-receipt-container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .online-receipt-container .receipt-preview {
+            border: none;
+            background: white;
+            box-shadow: none;
+            padding: 20px;
+        }
+
+        .online-receipt-container .btn {
+            width: auto;
+            min-width: 200px;
+            margin: 10px auto;
+        }
+
+        .online-receipt-container .btn-container {
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .online-view-header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .online-view-header h1 {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 1.8rem;
+        }
+
+        .online-view-header p {
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .cloud-error-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 2px solid var(--error-red);
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--error-red);
+            display: none;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .cloud-error-box.show {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 25px 20px; }
+            .panel { padding: 15px; }
+            .btn { padding: 12px 16px; }
+            .online-receipt-container { margin: 20px 10px; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <div class="login-icon">
+                <i class="fas fa-shield-haltered"></i>
+            </div>
+            <h2>System Authentication</h2>
+            <p class="subtitle">THANIMA IYKARAYIL MDS Terminal</p>
+
+            <div class="input-group">
+                <input type="text" id="loginUser" placeholder="Enter Operator ID" autocomplete="off">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPass" placeholder="Enter Passcode" autocomplete="off">
+                <i class="fas fa-lock"></i>
+            </div>
+            <p id="loginError" style="color: var(--error-red); display: none; margin-bottom: 15px; font-weight: 600; font-size: 0.9rem;"></p>
+            <button class="btn btn-primary" onclick="handleAuthSubmit()" id="loginBtn">
+                <i class="fas fa-unlock-alt"></i> Unlock Workspace
+            </button>
+            <p style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">
+                <i class="fas fa-shield-alt"></i> Secured Government Approved Portal
+            </p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar-panel">
+            <div class="sidebar-brand">
+                <h3>THANIMA IYKARAYIL MDS</h3>
+                <p>Institutional Management Matrix</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" id="nav-billing" onclick="switchConsoleTab('billing')">
+                    <i class="fas fa-receipt"></i> Billing Form
+                </li>
+                <li class="menu-item" id="nav-students" onclick="switchConsoleTab('students')">
+                    <i class="fas fa-folder-tree"></i> Student Archives
+                </li>
+                <li class="menu-item" id="nav-settings" onclick="switchConsoleTab('settings')">
+                    <i class="fas fa-cog"></i> Control Settings
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-view">
+            <header class="dashboard-header">
+                <div class="header-info">
+                    <h2 id="topNavTitle">Terminal Billing Form</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <i class="fas fa-certificate"></i> Govt Approved Institution
+                    </p>
+                </div>
+                <div class="header-stats" id="headerStats">
+                    <div class="stat-badge">
+                        <div class="stat-value" id="totalTransactions">0</div>
+                        <div class="stat-label">Total Receipts</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="todayRevenue">₹0</div>
+                        <div class="stat-label">Today's Revenue</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Billing Tab -->
+            <div id="tab-billing" class="tab-page active">
+                <div class="form-split-layout">
+                    <div class="panel">
+                        <div class="db-config-box">
+                            <div class="status-dot" id="cloudStatusDot"></div>
+                            <div id="dbStatusLabel">Status: Checking cloud connection...</div>
+                        </div>
+                        <div class="cloud-error-box" id="cloudErrorBox">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="cloudErrorMessage">Cloud connection error</span>
+                        </div>
+                        <form id="receiptForm" onsubmit="event.preventDefault();">
+                            <div class="form-group">
+                                <label><i class="fas fa-hashtag"></i> Receipt Number (Sequential)</label>
+                                <input type="text" id="receiptNo" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-user-graduate"></i> Name</label>
+                                <input type="text" id="custName" placeholder="Enter full name" oninput="updatePreview()">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-phone"></i> WhatsApp Mobile Number</label>
+                                <input type="tel" id="whatsappNo" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-graduation-cap"></i> Course Selection Profile</label>
+                                <select id="course" onchange="updatePreview()"></select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-credit-card"></i> Mode of Settlement</label>
+                                <select id="payMode" onchange="updatePreview()">
+                                    <option value="UPI / GooglePay / PhonePe">UPI / GooglePay / PhonePe</option>
+                                    <option value="Cash Handover">Cash Handover</option>
+                                    <option value="Bank NetBanking Transfer">Bank NetBanking Transfer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-rupee-sign"></i> Amount Settled (₹)</label>
+                                <input type="number" id="amount" placeholder="Enter payment amount" min="0" step="1" oninput="updatePreview()">
+                            </div>
+                            <div class="btn-container">
+                                <button type="button" class="btn btn-success" onclick="sendWhatsApp()" id="sendBtn">
+                                    <i class="fas fa-paper-plane"></i> Dispatch Receipt via WhatsApp
+                                </button>
+                                <button type="button" class="btn btn-outline" onclick="resetFormForNewReceipt()">
+                                    <i class="fas fa-plus-circle"></i> Create New Blank Form
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="printReceipt()">
+                                    <i class="fas fa-print"></i> Print Receipt
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="checkCloudConnection()" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                                    <i class="fas fa-sync-alt"></i> Check Cloud Connection
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="panel" style="background: rgba(255,255,255,0.02);">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">
+                            <i class="fas fa-eye"></i> Live Receipt Preview
+                        </h3>
+                        <div id="printReceiptArea">
+                            <div class="receipt-preview">
+                                <div class="receipt-header">
+                                    <h2 id="previewHeader">THANIMA IYKARAYIL MDS</h2>
+                                    <p style="font-size: 0.9rem; color: #475569; margin-top: 4px;">Govt Reg. Institution</p>
+                                    <p style="font-size: 0.8rem; color: #64748b;">⭐⭐⭐⭐⭐</p>
+                                </div>
+                                <div class="receipt-row">
+                                    <span id="previewReceiptNo" style="font-weight: 600;">Receipt No: --</span>
+                                    <span id="previewDate">Date: --</span>
+                                </div>
+                                <div class="receipt-row" style="margin-top: 20px;">
+                                    <span style="color: #64748b;">Received From:</span>
+                                    <span id="previewName" style="font-weight: 700; text-transform: uppercase;">____________________</span>
+                                </div>
+                                <div class="receipt-row">
+                                    <span style="color: #64748b;">Course Allotted:</span>
+                                    <span id="previewCourse" style="font-weight: 600;">--</span>
+                                </div>
+                                <div class="receipt-row">
+                                    <span style="color: #64748b;">Settlement Mode:</span>
+                                    <span id="previewMode" style="font-weight: 600;">--</span>
+                                </div>
+                                <div class="receipt-total" id="previewAmount">₹ 0</div>
+                                <div style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                                    <i class="fas fa-check-circle" style="color: var(--success-green);"></i> Verified electronic document
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Tab -->
+            <div id="tab-students" class="tab-page">
+                <div class="panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                        <h3 style="color: var(--accent-cyan);">
+                            <i class="fas fa-archive"></i> Student Payment Archives
+                        </h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="syncWithCloud()" style="width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                                <i class="fas fa-sync-alt"></i> Refresh from Cloud
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-input-wrapper" style="margin-bottom: 25px;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="historySearch" placeholder="Search archive by name or phone..." oninput="loadGroupedStudents()">
+                    </div>
+                    <div id="groupedFoldersContainer">
+                        <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                            <p>Loading data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="tab-settings" class="tab-page">
+                <div class="settings-grid-layout">
+                    <div class="panel">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px;">
+                            <i class="fas fa-lock"></i> Security Credentials
+                        </h3>
+                        <div class="form-group">
+                            <label style="color: var(--error-red);">
+                                <i class="fas fa-key"></i> Verify Current Passcode *
+                            </label>
+                            <input type="password" id="settingsOldPass" placeholder="Enter current passcode">
+                        </div>
+                        <div style="border-top: 2px solid var(--border-color); margin: 25px 0; padding-top: 20px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-user-tag"></i> New Operator ID</label>
+                                <input type="text" id="settingsUser" placeholder="New Username">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> New Passcode</label>
+                                <input type="password" id="settingsPass" placeholder="New Password">
+                            </div>
+                            <button class="btn btn-success" onclick="saveSecurityCredentials()">
+                                <i class="fas fa-save"></i> Update Credentials
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px;">
+                            <i class="fas fa-list-check"></i> Course Management
+                        </h3>
+                        <div class="form-group">
+                            <label><i class="fas fa-plus-circle"></i> Add New Course Option</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="newCourseInput" placeholder="e.g. Manual Car Package">
+                                <button type="button" class="btn btn-success" onclick="addCustomCourseOption()" style="width: auto; padding: 12px 20px;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                        <label style="margin-top: 25px;">
+                            <i class="fas fa-database"></i> Active Course Database
+                        </label>
+                        <ul id="courseConfigurationManagerList" class="course-manager-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmationModal">
+        <div class="modal-content">
+            <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">
+                <i class="fas fa-exclamation-triangle"></i> Confirm Action
+            </h3>
+            <p id="modalMessage" style="margin-bottom: 20px;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" id="modalConfirmBtn">Confirm</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Receipt View -->
+    <div id="onlineReceiptView" style="display: none; min-height: 100vh; background: #f1f5f9; padding: 20px;">
+        <div class="online-receipt-container">
+            <div class="online-view-header">
+                <h1>🧾 THANIMA IYKARAYIL MDS</h1>
+                <p>Official Digital Receipt | Govt Approved Institution</p>
+            </div>
+            <div class="receipt-preview" id="onlineReceiptContent">
+                <div class="receipt-header">
+                    <h2>THANIMA IYKARAYIL MDS</h2>
+                    <p style="font-size: 0.9rem; color: #475569; margin-top: 4px;">Govt Reg. Institution</p>
+                </div>
+                <div class="receipt-row">
+                    <span id="onlineReceiptNo" style="font-weight: 600;">Receipt No: --</span>
+                    <span id="onlineDate">Date: --</span>
+                </div>
+                <div class="receipt-row" style="margin-top: 20px;">
+                    <span style="color: #64748b;">Received From:</span>
+                    <span id="onlineName" style="font-weight: 700; text-transform: uppercase;">--</span>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: #64748b;">Course Allotted:</span>
+                    <span id="onlineCourse" style="font-weight: 600;">--</span>
+                </div>
+                <div class="receipt-row">
+                    <span style="color: #64748b;">Settlement Mode:</span>
+                    <span id="onlineMode" style="font-weight: 600;">--</span>
+                </div>
+                <div class="receipt-total" id="onlineAmount">₹ 0</div>
+                <div style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                    <i class="fas fa-check-circle" style="color: var(--success-green);"></i> Verified electronic document
+                </div>
+            </div>
+            <div class="btn-container" style="margin-top: 30px; flex-direction: row; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="window.print()" style="width: auto; min-width: 150px;">
+                    <i class="fas fa-print"></i> Print Receipt
+                </button>
+                <button class="btn btn-primary" onclick="window.close()" style="width: auto; min-width: 150px; background: var(--gradient-1);">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+            <p style="text-align: center; margin-top: 20px; color: #94a3b8; font-size: 0.8rem;">
+                <i class="fas fa-shield-alt"></i> This is a system-generated receipt. For queries, contact the institution.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // YOUR NEW GOOGLE APPS SCRIPT DEPLOYMENT URL
+        // ==========================================
+        const googleScriptUrl = "https://script.google.com/macros/s/AKfycbwYRCrPlrt6p6UR9R2U9EApTIyiILjzHRxM9ODNno4AKHynHKINsaqUnh_x9L7XTx78/exec";
+        
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const BASE_URL = window.location.href.split('?')[0];
+
+        // ==========================================
+        // STATE
+        // ==========================================
+        let expandedFolders = {};
+        let isSyncing = false;
+        let cloudDataCache = [];
+        let cloudConnected = false;
+        let lastCloudError = '';
+        let receiptCounter = 1000;
+
+        const defaultCoursesList = [
+            "Fresh Driving Learners License Track",
+            "Two Wheeler Training (Scooter/Motorcycle)",
+            "Four Wheeler Car Training (Manual)",
+            "Combined Package (Two + Four Wheeler)",
+            "License Renewal & Documentation"
+        ];
+
+        // ==========================================
+        // AUDIO FUNCTIONS
+        // ==========================================
+        function playLoginSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [523.25, 659.25, 783.99];
+                notes.forEach((freq, index) => {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime + index * 0.1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + index * 0.1 + 0.2);
+                    oscillator.start(audioCtx.currentTime + index * 0.1);
+                    oscillator.stop(audioCtx.currentTime + index * 0.1 + 0.2);
+                });
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function playErrorSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.3);
+                oscillator.type = 'sawtooth';
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        // ==========================================
+        // HELPER FUNCTIONS
+        // ==========================================
+        function safeString(value) {
+            if (value === null || value === undefined) return '';
+            return String(value);
+        }
+
+        function safeTrim(value) {
+            return safeString(value).trim();
+        }
+
+        function showErrorInUI(message) {
+            const errorBox = document.getElementById('cloudErrorBox');
+            const errorMsg = document.getElementById('cloudErrorMessage');
+            errorMsg.textContent = message;
+            errorBox.classList.add('show');
+            lastCloudError = message;
+        }
+
+        function hideErrorInUI() {
+            const errorBox = document.getElementById('cloudErrorBox');
+            errorBox.classList.remove('show');
+            lastCloudError = '';
+        }
+
+        // ==========================================
+        // JSONP FUNCTION FOR GET REQUESTS
+        // ==========================================
+        function fetchWithJSONP(url, callback) {
+            const script = document.createElement('script');
+            const callbackName = 'jsonp_callback_' + Date.now();
+            
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                callback(null, data);
+            };
+            
+            script.src = url + '&callback=' + callbackName;
+            script.onerror = function() {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                callback(new Error('Network error or CORS issue'), null);
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        // ==========================================
+        // CLOUD CONNECTION CHECK - Using JSONP
+        // ==========================================
+        async function checkCloudConnection() {
+            const statusDot = document.getElementById('cloudStatusDot');
+            const statusLabel = document.getElementById('dbStatusLabel');
+            
+            hideErrorInUI();
+            statusDot.className = 'status-dot syncing';
+            statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Checking cloud connection...';
+
+            return new Promise((resolve) => {
+                fetchWithJSONP(googleScriptUrl + '?action=get', function(error, data) {
+                    if (error) {
+                        console.error('Cloud connection check failed:', error);
+                        cloudConnected = false;
+                        statusDot.className = 'status-dot offline';
+                        const errorMsg = 'Cloud offline: ' + error.message;
+                        statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
+                        showErrorInUI(errorMsg);
+                        cloudDataCache = [];
+                        loadGroupedStudents();
+                        updateDashboardStats();
+                        updateReceiptNumberDisplay();
+                        showToast('❌ ' + errorMsg, 'error');
+                        resolve(false);
+                        return;
+                    }
+
+                    if (data && !data.error) {
+                        cloudConnected = true;
+                        statusDot.className = 'status-dot online';
+                        statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Connected ✅';
+                        syncWithCloud();
+                        hideErrorInUI();
+                        resolve(true);
+                    } else {
+                        const errMsg = data?.error || 'Invalid cloud response';
+                        cloudConnected = false;
+                        statusDot.className = 'status-dot offline';
+                        statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errMsg;
+                        showErrorInUI(errMsg);
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
+        // ==========================================
+        // URL SHORTENER
+        // ==========================================
+        async function shortenUrl(longUrl) {
+            try {
+                const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+                const shortUrl = await response.text();
+                return shortUrl.trim() || longUrl;
+            } catch (error) {
+                console.error('URL shortening failed:', error);
+                return longUrl;
+            }
+        }
+
+        // ==========================================
+        // CLOUD SYNC - Using JSONP
+        // ==========================================
+        function syncWithCloud() {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            const statusDot = document.getElementById('cloudStatusDot');
+            const statusLabel = document.getElementById('dbStatusLabel');
+            
+            statusDot.className = 'status-dot syncing';
+            statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Syncing with Cloud...';
+
+            fetchWithJSONP(googleScriptUrl + '?action=get', function(error, cloudData) {
+                if (error) {
+                    console.error('Sync error:', error);
+                    cloudConnected = false;
+                    statusDot.className = 'status-dot offline';
+                    const errorMsg = 'Sync failed: ' + error.message;
+                    statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
+                    showErrorInUI(errorMsg);
+                    showToast('❌ ' + errorMsg, 'error');
+                    cloudDataCache = [];
+                    loadGroupedStudents();
+                    updateDashboardStats();
+                    isSyncing = false;
+                    return;
+                }
+
+                try {
+                    if (cloudData && !cloudData.error) {
+                        if (!Array.isArray(cloudData)) {
+                            cloudData = [cloudData];
+                        }
+                        
+                        // Sanitize cloud data
+                        cloudData = cloudData.map(record => ({
+                            ...record,
+                            name: safeTrim(record.name),
+                            phone: safeTrim(record.phone),
+                            course: safeTrim(record.course),
+                            mode: safeTrim(record.mode),
+                            receiptNo: safeTrim(record.receiptNo),
+                            amount: parseFloat(record.amount) || 0,
+                            date: safeTrim(record.date),
+                            time: safeTrim(record.time),
+                            timestamp: parseInt(record.timestamp) || Date.now()
+                        }));
+                        
+                        cloudDataCache = cloudData;
+                        cloudConnected = true;
+                        
+                        updateCounterFromCloud(cloudData);
+                        
+                        statusDot.className = 'status-dot online';
+                        statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Synced ✅ (' + cloudData.length + ' records)';
+                        hideErrorInUI();
+                        showToast('✅ Synced with cloud! ' + cloudData.length + ' records loaded.');
+                    } else {
+                        throw new Error(cloudData?.error || 'Invalid cloud response');
+                    }
+                    
+                    loadGroupedStudents();
+                    updateDashboardStats();
+                    updateReceiptNumberDisplay();
+                } catch (err) {
+                    console.error('Sync error:', err);
+                    cloudConnected = false;
+                    statusDot.className = 'status-dot offline';
+                    const errorMsg = 'Sync failed: ' + err.message;
+                    statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
+                    showErrorInUI(errorMsg);
+                    showToast('❌ ' + errorMsg, 'error');
+                    cloudDataCache = [];
+                    loadGroupedStudents();
+                    updateDashboardStats();
+                }
+                isSyncing = false;
+            });
+        }
+
+        function updateCounterFromCloud(cloudData) {
+            if (!cloudData || cloudData.length === 0) {
+                receiptCounter = 1000;
+                return;
+            }
+
+            let maxNumber = 1000;
+            cloudData.forEach(record => {
+                if (record.receiptNo) {
+                    const match = record.receiptNo.match(/TI-(\d+)/);
+                    if (match && match[1]) {
+                        const num = parseInt(match[1]);
+                        if (num > maxNumber) maxNumber = num;
+                    }
+                }
+            });
+
+            receiptCounter = Math.max(1000, maxNumber);
+            localStorage.setItem('receipt_counter', receiptCounter.toString());
+        }
+
+        // ==========================================
+        // RECEIPT FUNCTIONS
+        // ==========================================
+        function getNextReceiptNumber() {
+            receiptCounter++;
+            localStorage.setItem('receipt_counter', receiptCounter.toString());
+            return 'TI-' + receiptCounter.toString().padStart(6, '0');
+        }
+
+        function getCurrentReceiptNumber() {
+            return 'TI-' + (receiptCounter + 1).toString().padStart(6, '0');
+        }
+
+        function updateReceiptNumberDisplay() {
+            document.getElementById('receiptNo').value = getCurrentReceiptNumber();
+        }
+
+        function updatePreview() {
+            if (document.body.classList.contains('customer-view-mode')) return;
+
+            const receiptNo = document.getElementById('receiptNo').value;
+            const name = document.getElementById('custName').value || '____________________';
+            const course = document.getElementById('course').value || '--';
+            const amount = document.getElementById('amount').value || '0';
+            const mode = document.getElementById('payMode').value;
+            const date = new Date().toLocaleDateString('en-IN', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            document.getElementById('previewReceiptNo').innerText = 'Receipt No: ' + receiptNo;
+            document.getElementById('previewDate').innerText = 'Date: ' + date;
+            document.getElementById('previewName').innerText = name;
+            document.getElementById('previewCourse').innerText = course;
+            document.getElementById('previewMode').innerText = mode;
+            document.getElementById('previewAmount').innerText = '₹ ' + parseFloat(amount).toLocaleString('en-IN');
+        }
+
+        function validateForm() {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('whatsappNo').value.trim();
+            const amount = document.getElementById('amount').value.trim();
+
+            if (!name) {
+                showToast('Please enter name', 'error');
+                return false;
+            }
+            if (!phone || !/^\d{10}$/.test(phone)) {
+                showToast('Please enter a valid 10-digit mobile number', 'error');
+                return false;
+            }
+            if (!amount || parseFloat(amount) <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // ==========================================
+        // SEND WHATSAPP - POST request
+        // ==========================================
+        async function sendWhatsApp() {
+            if (!cloudConnected) {
+                showToast('❌ Cannot generate receipt: Cloud is offline. Please check your connection.', 'error');
+                return;
+            }
+
+            if (!validateForm()) return;
+
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                const receiptNo = getNextReceiptNumber();
+                document.getElementById('receiptNo').value = receiptNo;
+
+                const name = document.getElementById('custName').value.trim();
+                const phone = document.getElementById('whatsappNo').value.trim();
+                const course = document.getElementById('course').value;
+                const mode = document.getElementById('payMode').value;
+                const amount = document.getElementById('amount').value.trim();
+                const date = new Date().toLocaleDateString('en-IN', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                const time = new Date().toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const newRecord = {
+                    receiptNo,
+                    name,
+                    phone,
+                    course,
+                    mode,
+                    amount: parseFloat(amount),
+                    date,
+                    time,
+                    timestamp: Date.now()
+                };
+
+                console.log('Sending to cloud:', newRecord);
+
+                // POST request - works with Google Apps Script
+                const response = await fetch(googleScriptUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newRecord)
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Cloud save failed: ' + response.status + ' - ' + errorText);
+                }
+
+                const result = await response.json();
+                console.log('Cloud response:', result);
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Update local cache
+                cloudDataCache = [newRecord, ...cloudDataCache];
+
+                // Generate online receipt link
+                const receiptUrl = `${BASE_URL}?bill=${receiptNo}&name=${encodeURIComponent(name)}&amount=${amount}&course=${encodeURIComponent(course)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}`;
+                
+                let shortUrl = await shortenUrl(receiptUrl);
+                if (!shortUrl || shortUrl.includes('error')) {
+                    shortUrl = receiptUrl;
+                }
+
+                const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
+                               `_Official Digital Receipt_\n\n` +
+                               `📋 *Receipt No:* ${receiptNo}\n` +
+                               `📅 *Date:* ${date} ${time}\n` +
+                               `👤 *Name:* ${name.toUpperCase()}\n` +
+                               `📚 *Course:* ${course}\n` +
+                               `💳 *Payment Mode:* ${mode}\n\n` +
+                               `💰 *Total Paid: ₹ ${parseFloat(amount).toLocaleString('en-IN')}*\n\n` +
+                               `✅ _Verified Electronic Statement_\n` +
+                               `🏫 Govt Approved Institution\n\n` +
+                               `🔗 *View Receipt Online:*\n${shortUrl}`;
+
+                const cleanPhone = phone.replace(/\D/g, '');
+                const formattedPhone = '91' + cleanPhone;
+                window.open(
+                    `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`,
+                    '_blank'
+                );
+
+                showToast('✅ Receipt #' + receiptNo + ' generated and saved to cloud!');
+                updateDashboardStats();
+                updateReceiptNumberDisplay();
+                resetFormForNewReceipt();
+
+            } catch (error) {
+                console.error('Send error:', error);
+                showToast('❌ Failed to save to cloud: ' + error.message, 'error');
+                showErrorInUI('Cloud error: ' + error.message);
+                // Refresh cloud status
+                await checkCloudConnection();
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Dispatch Receipt via WhatsApp';
+            }
+        }
+
+        function resetFormForNewReceipt() {
+            document.getElementById('custName').value = '';
+            document.getElementById('whatsappNo').value = '';
+            document.getElementById('amount').value = '';
+            updateReceiptNumberDisplay();
+            updatePreview();
+        }
+
+        function printReceipt() {
+            if (!document.getElementById('custName').value.trim()) {
+                showToast('Please fill name details before printing', 'error');
+                return;
+            }
+            window.print();
+        }
+
+        // ==========================================
+        // STUDENT ARCHIVES
+        // ==========================================
+        function loadGroupedStudents() {
+            const history = cloudDataCache || [];
+            
+            const searchQuery = document.getElementById('historySearch')?.value?.toLowerCase().trim() || '';
+            const container = document.getElementById('groupedFoldersContainer');
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 60px 20px;">
+                        <i class="fas fa-archive" style="font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5;"></i>
+                        <h3>No Records Yet</h3>
+                        <p style="margin-top: 10px;">Start processing payments to build your archive</p>
+                        <button class="btn btn-primary" onclick="syncWithCloud()" style="margin-top: 20px; width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                            <i class="fas fa-cloud-download-alt"></i> Load from Cloud
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            const groups = {};
+            history.forEach(item => {
+                const name = safeTrim(item.name);
+                const phone = safeTrim(item.phone);
+                const key = `${name.toLowerCase()}_${phone}`;
+                
+                if (!groups[key]) {
+                    groups[key] = {
+                        name: name || 'Unknown',
+                        phone: phone || 'N/A',
+                        totalPaid: 0,
+                        transactions: []
+                    };
+                }
+                groups[key].transactions.push(item);
+                groups[key].totalPaid += parseFloat(item.amount) || 0;
+            });
+
+            let objectRows = Object.values(groups);
+
+            if (searchQuery) {
+                objectRows = objectRows.filter(g =>
+                    g.name.toLowerCase().includes(searchQuery) ||
+                    g.phone.includes(searchQuery)
+                );
+            }
+
+            if (objectRows.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                        <p>No matching records found</p>
+                    </div>`;
+                return;
+            }
+
+            objectRows.sort((a, b) => {
+                const aLatest = Math.max(...a.transactions.map(t => t.timestamp || 0));
+                const bLatest = Math.max(...b.transactions.map(t => t.timestamp || 0));
+                return bLatest - aLatest;
+            });
+
+            container.innerHTML = objectRows.map((group, idx) => {
+                const folderId = `folder-${idx}`;
+                const isOpen = expandedFolders[folderId];
+
+                return `
+                    <div class="folder-box">
+                        <div class="folder-header" onclick="toggleFolder('${folderId}')">
+                            <div class="folder-title">
+                                <i class="fas fa-${isOpen ? 'folder-open' : 'folder'}"></i>
+                                ${group.name}
+                            </div>
+                            <div class="folder-meta">
+                                <span class="count-badge">
+                                    <i class="fas fa-receipt"></i> ${group.transactions.length} payment${group.transactions.length > 1 ? 's' : ''}
+                                </span>
+                                <span class="total-badge">
+                                    <i class="fas fa-rupee-sign"></i> ${group.totalPaid.toLocaleString('en-IN')}
+                                </span>
+                                <span class="count-badge">
+                                    <i class="fas fa-phone"></i> ${group.phone}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="folder-content ${isOpen ? 'open' : ''}" id="${folderId}">
+                            ${group.transactions.map(tx => `
+                                <div class="nested-payment-card">
+                                    <div class="nested-grid">
+                                        <div>
+                                            <strong style="color: var(--accent-cyan);">Receipt: ${safeTrim(tx.receiptNo)}</strong>
+                                            <br><small style="color: var(--text-muted);">${safeTrim(tx.date)} ${safeTrim(tx.time || '')}</small>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--accent-blue);">${safeTrim(tx.course)}</span>
+                                            <br><small style="color: var(--text-muted);">${safeTrim(tx.mode)}</small>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <strong style="color: var(--success-green); font-size: 1.1rem;">₹ ${parseFloat(tx.amount || 0).toLocaleString('en-IN')}</strong>
+                                            <br>
+                                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem; width: auto;" 
+                                                    onclick="resendWhatsApp('${safeTrim(tx.receiptNo)}', '${safeTrim(tx.name)}', '${safeTrim(tx.phone)}', '${safeTrim(tx.course)}', '${safeTrim(tx.mode)}', '${parseFloat(tx.amount || 0)}', '${safeTrim(tx.date)}', '${safeTrim(tx.time || '')}')">
+                                                <i class="fas fa-paper-plane"></i> Resend
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleFolder(folderId) {
+            expandedFolders[folderId] = !expandedFolders[folderId];
+            loadGroupedStudents();
+        }
+
+        async function resendWhatsApp(receiptNo, name, phone, course, mode, amount, date, time) {
+            if (!cloudConnected) {
+                showToast('❌ Cannot resend: Cloud is offline. Please check your connection.', 'error');
+                return;
+            }
+
+            const receiptUrl = `${BASE_URL}?bill=${receiptNo}&name=${encodeURIComponent(name)}&amount=${amount}&course=${encodeURIComponent(course)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}`;
+            
+            let shortUrl = await shortenUrl(receiptUrl);
+            if (!shortUrl || shortUrl.includes('error')) {
+                shortUrl = receiptUrl;
+            }
+
+            const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
+                           `_Official Digital Receipt (Reissued)_\n\n` +
+                           `📋 *Receipt No:* ${receiptNo}\n` +
+                           `📅 *Date:* ${date} ${time}\n` +
+                           `👤 *Name:* ${name.toUpperCase()}\n` +
+                           `📚 *Course:* ${course}\n` +
+                           `💳 *Payment Mode:* ${mode}\n\n` +
+                           `💰 *Total Paid: ₹ ${parseFloat(amount).toLocaleString('en-IN')}*\n\n` +
+                           `✅ _Verified Electronic Statement_\n` +
+                           `🏫 Govt Approved Institution\n\n` +
+                           `🔗 *View Receipt Online:*\n${shortUrl}`;
+
+            const cleanPhone = phone.replace(/\D/g, '');
+            const formattedPhone = '91' + cleanPhone;
+            window.open(
+                `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`,
+                '_blank'
+            );
+        }
+
+        // ==========================================
+        // DASHBOARD STATISTICS
+        // ==========================================
+        function updateDashboardStats() {
+            const history = cloudDataCache || [];
+            document.getElementById('totalTransactions').textContent = history.length;
+
+            const today = new Date().toLocaleDateString('en-IN');
+            const todayTotal = history
+                .filter(record => record.date === today)
+                .reduce((sum, record) => sum + parseFloat(record.amount || 0), 0);
+            document.getElementById('todayRevenue').textContent = '₹' + todayTotal.toLocaleString('en-IN');
+        }
+
+        // ==========================================
+        // COURSE MANAGEMENT
+        // ==========================================
+        function renderCourseMenusUI() {
+            const currentCourses = JSON.parse(localStorage.getItem('driving_school_courses')) || defaultCoursesList;
+            const billingSelect = document.getElementById('course');
+            billingSelect.innerHTML = currentCourses.map(course => 
+                `<option value="${course}">${course}</option>`
+            ).join('');
+
+            const managementList = document.getElementById('courseConfigurationManagerList');
+            managementList.innerHTML = currentCourses.map((course, idx) => `
+                <li class="course-manager-item">
+                    <span><i class="fas fa-graduation-cap" style="margin-right: 8px;"></i>${course}</span>
+                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.85rem;" 
+                            onclick="removeCustomCourseOption(${idx})">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </li>
+            `).join('');
+            updatePreview();
+        }
+
+        function addCustomCourseOption() {
+            const inputField = document.getElementById('newCourseInput');
+            const newTitle = inputField.value.trim();
+            if (!newTitle) {
+                showToast('Please enter a course name', 'error');
+                return;
+            }
+            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
+            if (courses.includes(newTitle)) {
+                showToast('Course already exists!', 'error');
+                return;
+            }
+            courses.push(newTitle);
+            localStorage.setItem('driving_school_courses', JSON.stringify(courses));
+            inputField.value = '';
+            renderCourseMenusUI();
+            showToast('Course added successfully!');
+        }
+
+        function removeCustomCourseOption(indexPosition) {
+            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
+            if (courses.length <= 1) {
+                showToast('Cannot delete the last course option', 'error');
+                return;
+            }
+            const courseName = courses[indexPosition];
+            showModal(`Are you sure you want to delete "${courseName}"?`, function() {
+                courses.splice(indexPosition, 1);
+                localStorage.setItem('driving_school_courses', JSON.stringify(courses));
+                renderCourseMenusUI();
+                showToast('Course removed successfully');
+            });
+        }
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+        function handleAuthSubmit() {
+            const userInput = document.getElementById('loginUser').value.trim();
+            const passInput = document.getElementById('loginPass').value.trim();
+            const errorLabel = document.getElementById('loginError');
+
+            if (!userInput || !passInput) {
+                errorLabel.innerText = "Please fill in all fields.";
+                errorLabel.style.display = 'block';
+                playErrorSound();
+                return;
+            }
+
+            if (userInput === localStorage.getItem('admin_user') && 
+                passInput === localStorage.getItem('admin_pass')) {
+                playLoginSound();
+                
+                sessionStorage.setItem('auth_state', 'verified');
+                sessionStorage.setItem('auth_method', 'manual');
+                document.getElementById('loginScreen').style.display = 'none';
+                errorLabel.style.display = 'none';
+                updateDashboardStats();
+                showToast('🎉 Welcome back, ' + userInput + '!');
+                checkCloudConnection();
+            } else {
+                errorLabel.innerText = "Invalid Operator Credentials.";
+                errorLabel.style.display = 'block';
+                playErrorSound();
+                document.getElementById('loginPass').value = '';
+                document.getElementById('loginPass').classList.add('key-press');
+                setTimeout(() => {
+                    document.getElementById('loginPass').classList.remove('key-press');
+                }, 200);
+            }
+        }
+
+        function handleLogout() {
+            showModal('Are you sure you want to logout?', function() {
+                sessionStorage.removeItem('auth_state');
+                sessionStorage.removeItem('auth_method');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                cloudDataCache = [];
+                hideErrorInUI();
+            });
+        }
+
+        function saveSecurityCredentials() {
+            const oldPassInput = document.getElementById('settingsOldPass').value;
+            const newUser = document.getElementById('settingsUser').value.trim();
+            const newPass = document.getElementById('settingsPass').value.trim();
+
+            if (oldPassInput !== localStorage.getItem('admin_pass')) {
+                showToast('Current passcode incorrect!', 'error');
+                playErrorSound();
+                return;
+            }
+            if (!newUser || !newPass) {
+                showToast('Fields cannot be blank!', 'error');
+                playErrorSound();
+                return;
+            }
+            if (newPass.length < 4) {
+                showToast('Password must be at least 4 characters!', 'error');
+                playErrorSound();
+                return;
+            }
+
+            localStorage.setItem('admin_user', newUser);
+            localStorage.setItem('admin_pass', newPass);
+            document.getElementById('settingsOldPass').value = '';
+            document.getElementById('settingsPass').value = '';
+            showToast('Credentials updated successfully!');
+            playLoginSound();
+        }
+
+        // ==========================================
+        // TAB NAVIGATION
+        // ==========================================
+        function switchConsoleTab(tabId) {
+            document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+            const tabElement = document.getElementById('tab-' + tabId);
+            const navElement = document.getElementById('nav-' + tabId);
+
+            if (tabElement) tabElement.classList.add('active');
+            if (navElement) navElement.classList.add('active');
+
+            const titles = {
+                'billing': 'Terminal Billing Form',
+                'students': 'Student Payment Archives',
+                'settings': 'System Control Settings'
+            };
+            document.getElementById('topNavTitle').textContent = titles[tabId] || 'Dashboard';
+
+            if (tabId === 'students') {
+                loadGroupedStudents();
+                updateDashboardStats();
+            } else if (tabId === 'settings') {
+                document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
+                document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
+                renderCourseMenusUI();
+            }
+        }
+
+        // ==========================================
+        // TOAST AND MODAL
+        // ==========================================
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (type === 'error') toast.classList.add('error');
+            if (type === 'warning') toast.classList.add('warning');
+            toast.innerHTML = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        function showModal(message, confirmCallback) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('modalMessage').textContent = message;
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            confirmBtn.onclick = function() {
+                confirmCallback();
+                closeModal();
+            };
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').classList.remove('active');
+        }
+
+        // ==========================================
+        // ONLINE RECEIPT VIEW
+        // ==========================================
+        function renderOnlineReceiptView(urlParams) {
+            const receiptNo = urlParams.get('bill') || '---';
+            const name = urlParams.get('name') || 'Customer';
+            const amount = urlParams.get('amount') || '0';
+            const course = urlParams.get('course') || '--';
+            const mode = urlParams.get('mode') || '--';
+            const date = urlParams.get('date') || new Date().toLocaleDateString('en-IN', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            document.querySelector('.dashboard-container').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('onlineReceiptView').style.display = 'block';
+
+            document.getElementById('onlineReceiptNo').textContent = 'Receipt No: ' + receiptNo;
+            document.getElementById('onlineDate').textContent = 'Date: ' + date;
+            document.getElementById('onlineName').textContent = name.toUpperCase();
+            document.getElementById('onlineCourse').textContent = course;
+            document.getElementById('onlineMode').textContent = mode;
+            document.getElementById('onlineAmount').textContent = '₹ ' + parseFloat(amount).toLocaleString('en-IN');
+
+            document.title = 'Receipt ' + receiptNo + ' - THANIMA IYKARAYIL MDS';
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.onload = function() {
+            // Check if this is an online receipt view
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('bill')) {
+                renderOnlineReceiptView(urlParams);
+                return;
+            }
+
+            // Initialize localStorage defaults
+            if (!localStorage.getItem('admin_user')) localStorage.setItem('admin_user', 'Arun9666');
+            if (!localStorage.getItem('admin_pass')) localStorage.setItem('admin_pass', 'A6669n');
+            if (!localStorage.getItem('driving_school_courses')) {
+                localStorage.setItem('driving_school_courses', JSON.stringify(defaultCoursesList));
+            }
+            receiptCounter = parseInt(localStorage.getItem('receipt_counter')) || 1000;
+
+            document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
+            document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
+
+            renderCourseMenusUI();
+
+            // Add key press animation to login inputs
+            document.getElementById('loginUser').addEventListener('keypress', function() {
+                this.classList.add('key-press');
+                setTimeout(() => this.classList.remove('key-press'), 200);
+            });
+            document.getElementById('loginPass').addEventListener('keypress', function() {
+                this.classList.add('key-press');
+                setTimeout(() => this.classList.remove('key-press'), 200);
+            });
+
+            if (sessionStorage.getItem('auth_state') === 'verified') {
+                document.getElementById('loginScreen').style.display = 'none';
+                updateDashboardStats();
+                updateReceiptNumberDisplay();
+                updatePreview();
+                setTimeout(checkCloudConnection, 1000);
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'b':
+                            e.preventDefault();
+                            switchConsoleTab('billing');
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            switchConsoleTab('students');
+                            break;
+                        case ',':
+                            e.preventDefault();
+                            switchConsoleTab('settings');
+                            break;
+                    }
+                }
+            });
+
+            // Enter key for login
+            document.getElementById('loginPass').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleAuthSubmit();
+            });
+
+            document.getElementById('loginUser').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleAuthSubmit();
+            });
+        };
+    </script>
+</body>
+</html>
