@@ -1277,6 +1277,7 @@
         let cloudConnected = false;
         let lastCloudError = '';
         let receiptCounter = 1000;
+        let sheetColumns = []; // Store detected column names
 
         const defaultCoursesList = [
             "Fresh Driving Learners License Track",
@@ -1356,7 +1357,7 @@
         }
 
         // ==========================================
-        // FIXED: SHEETDB - FETCH DATA
+        // FIXED: SHEETDB - FETCH DATA & DETECT COLUMNS
         // ==========================================
         async function fetchDataFromSheetDB() {
             const statusDot = document.getElementById('cloudStatusDot');
@@ -1367,14 +1368,11 @@
             statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Fetching from database...';
 
             try {
-                // First, check if we can access the API
                 const response = await fetch(SHEETDB_URL);
                 
                 console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
                 
                 if (!response.ok) {
-                    // Try to get error details
                     const errorText = await response.text();
                     console.log('Error response:', errorText);
                     throw new Error('HTTP ' + response.status + ': ' + errorText);
@@ -1383,45 +1381,60 @@
                 const data = await response.json();
                 console.log('SheetDB data:', data);
                 
-                if (data && Array.isArray(data)) {
-                    if (data.length > 0) {
-                        // Get column names from first record
-                        const columns = Object.keys(data[0]);
-                        console.log('Available columns:', columns);
-                        
-                        // Sanitize data - handle different column name formats
-                        const sanitizedData = data.map(record => ({
-                            receiptNo: safeTrim(record.receiptNo || record.ReceiptNo || record['receiptNo'] || ''),
-                            name: safeTrim(record.name || record.Name || record['name'] || ''),
-                            phone: safeTrim(record.phone || record.Phone || record['phone'] || ''),
-                            course: safeTrim(record.course || record.Course || record['course'] || ''),
-                            mode: safeTrim(record.mode || record.Mode || record['mode'] || ''),
-                            amount: parseFloat(record.amount || record.Amount || record['amount']) || 0,
-                            date: safeTrim(record.date || record.Date || record['date'] || ''),
-                            time: safeTrim(record.time || record.Time || record['time'] || ''),
-                            timestamp: parseInt(record.timestamp || record.Timestamp || record['timestamp']) || Date.now()
-                        }));
-                        
-                        cloudDataCache = sanitizedData;
-                        cloudConnected = true;
-                        
-                        updateCounterFromCloud(sanitizedData);
-                        
-                        statusDot.className = 'status-dot online';
-                        statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + sanitizedData.length + ' records)';
-                        hideErrorInUI();
-                        showToast('✅ Loaded ' + sanitizedData.length + ' records from database!');
-                    } else {
-                        // No records yet - this is fine, database is empty
-                        cloudDataCache = [];
-                        cloudConnected = true;
-                        statusDot.className = 'status-dot online';
-                        statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected (No records yet)';
-                        hideErrorInUI();
-                        showToast('ℹ️ Database connected, but no records found.', 'warning');
-                    }
+                // Detect column names from first record
+                if (data && Array.isArray(data) && data.length > 0) {
+                    sheetColumns = Object.keys(data[0]);
+                    console.log('✅ Detected columns in sheet:', sheetColumns);
+                    
+                    // Sanitize data
+                    const sanitizedData = data.map(record => {
+                        const cleanRecord = {};
+                        // Map using detected columns
+                        sheetColumns.forEach(col => {
+                            const lowerCol = col.toLowerCase();
+                            const value = record[col] || '';
+                            
+                            // Map to our standard field names
+                            if (lowerCol.includes('receipt') || lowerCol.includes('receiptno')) {
+                                cleanRecord.receiptNo = safeTrim(value);
+                            } else if (lowerCol.includes('name')) {
+                                cleanRecord.name = safeTrim(value);
+                            } else if (lowerCol.includes('phone') || lowerCol.includes('mobile')) {
+                                cleanRecord.phone = safeTrim(value);
+                            } else if (lowerCol.includes('course')) {
+                                cleanRecord.course = safeTrim(value);
+                            } else if (lowerCol.includes('mode') || lowerCol.includes('payment')) {
+                                cleanRecord.mode = safeTrim(value);
+                            } else if (lowerCol.includes('amount') || lowerCol.includes('total')) {
+                                cleanRecord.amount = parseFloat(value) || 0;
+                            } else if (lowerCol.includes('date')) {
+                                cleanRecord.date = safeTrim(value);
+                            } else if (lowerCol.includes('time')) {
+                                cleanRecord.time = safeTrim(value);
+                            } else if (lowerCol.includes('timestamp')) {
+                                cleanRecord.timestamp = parseInt(value) || Date.now();
+                            }
+                        });
+                        return cleanRecord;
+                    });
+                    
+                    cloudDataCache = sanitizedData;
+                    cloudConnected = true;
+                    
+                    updateCounterFromCloud(sanitizedData);
+                    
+                    statusDot.className = 'status-dot online';
+                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + sanitizedData.length + ' records)';
+                    hideErrorInUI();
+                    showToast('✅ Loaded ' + sanitizedData.length + ' records from database!');
                 } else {
-                    throw new Error('Invalid data format received from database');
+                    // No records yet - database is empty, but connected
+                    cloudDataCache = [];
+                    cloudConnected = true;
+                    statusDot.className = 'status-dot online';
+                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected (No records yet)';
+                    hideErrorInUI();
+                    showToast('ℹ️ Database connected, but no records found.', 'warning');
                 }
                 
                 loadGroupedStudents();
@@ -1436,62 +1449,88 @@
                 statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
                 showErrorInUI(errorMsg);
                 showToast('❌ ' + errorMsg, 'error');
-                
-                // Show detailed error in console for debugging
-                console.error('Full error details:', {
-                    url: SHEETDB_URL,
-                    message: error.message,
-                    stack: error.stack
-                });
             }
         }
 
         // ==========================================
-        // FIXED: SHEETDB - SAVE DATA
+        // FIXED: SHEETDB - SAVE DATA WITH CORRECT FORMAT
         // ==========================================
         async function saveDataToSheetDB(record) {
             try {
-                // First, check what columns exist in the sheet
-                const checkResponse = await fetch(SHEETDB_URL);
-                let existingColumns = [];
-                let useLowercase = true;
-                
-                if (checkResponse.ok) {
-                    const existingData = await checkResponse.json();
-                    if (existingData && existingData.length > 0) {
-                        existingColumns = Object.keys(existingData[0]);
-                        console.log('Existing columns in sheet:', existingColumns);
-                        
-                        // Check if columns are uppercase or lowercase
-                        const hasUppercase = existingColumns.some(col => col === 'ReceiptNo');
-                        const hasLowercase = existingColumns.some(col => col === 'receiptNo');
-                        useLowercase = hasLowercase || !hasUppercase;
+                // If we don't have column info, fetch it first
+                if (sheetColumns.length === 0) {
+                    console.log('Fetching column info first...');
+                    const checkResponse = await fetch(SHEETDB_URL);
+                    if (checkResponse.ok) {
+                        const checkData = await checkResponse.json();
+                        if (checkData && checkData.length > 0) {
+                            sheetColumns = Object.keys(checkData[0]);
+                            console.log('Detected columns:', sheetColumns);
+                        }
                     }
                 }
                 
-                // Build the record with correct column names
+                // Build the record with ONLY the columns that exist in the sheet
                 const formattedRecord = {};
-                const columnMapping = {
-                    receiptNo: useLowercase ? 'receiptNo' : 'ReceiptNo',
-                    name: useLowercase ? 'name' : 'Name',
-                    phone: useLowercase ? 'phone' : 'Phone',
-                    course: useLowercase ? 'course' : 'Course',
-                    mode: useLowercase ? 'mode' : 'Mode',
-                    amount: useLowercase ? 'amount' : 'Amount',
-                    date: useLowercase ? 'date' : 'Date',
-                    time: useLowercase ? 'time' : 'Time',
-                    timestamp: useLowercase ? 'timestamp' : 'Timestamp'
-                };
                 
-                // Use the column names that exist in the sheet
-                const finalRecord = {};
-                for (const [key, value] of Object.entries(record)) {
-                    const columnName = columnMapping[key] || key;
-                    finalRecord[columnName] = value;
+                if (sheetColumns.length > 0) {
+                    // Map our fields to sheet columns
+                    const fieldMapping = {
+                        receiptNo: ['receiptNo', 'ReceiptNo', 'receiptno', 'Receiptno'],
+                        name: ['name', 'Name'],
+                        phone: ['phone', 'Phone', 'mobile', 'Mobile'],
+                        course: ['course', 'Course'],
+                        mode: ['mode', 'Mode', 'payment', 'Payment'],
+                        amount: ['amount', 'Amount', 'total', 'Total'],
+                        date: ['date', 'Date'],
+                        time: ['time', 'Time'],
+                        timestamp: ['timestamp', 'Timestamp']
+                    };
+                    
+                    // For each sheet column, find matching data
+                    sheetColumns.forEach(col => {
+                        const lowerCol = col.toLowerCase();
+                        let value = '';
+                        
+                        if (lowerCol.includes('receipt')) {
+                            value = record.receiptNo || '';
+                        } else if (lowerCol.includes('name')) {
+                            value = record.name || '';
+                        } else if (lowerCol.includes('phone') || lowerCol.includes('mobile')) {
+                            value = record.phone || '';
+                        } else if (lowerCol.includes('course')) {
+                            value = record.course || '';
+                        } else if (lowerCol.includes('mode') || lowerCol.includes('payment')) {
+                            value = record.mode || '';
+                        } else if (lowerCol.includes('amount') || lowerCol.includes('total')) {
+                            value = record.amount || 0;
+                        } else if (lowerCol.includes('date')) {
+                            value = record.date || '';
+                        } else if (lowerCol.includes('time')) {
+                            value = record.time || '';
+                        } else if (lowerCol.includes('timestamp')) {
+                            value = record.timestamp || Date.now();
+                        }
+                        
+                        if (value !== '') {
+                            formattedRecord[col] = value;
+                        }
+                    });
+                } else {
+                    // Fallback: Use lowercase standard fields
+                    formattedRecord.receiptNo = record.receiptNo || '';
+                    formattedRecord.name = record.name || '';
+                    formattedRecord.phone = record.phone || '';
+                    formattedRecord.course = record.course || '';
+                    formattedRecord.mode = record.mode || '';
+                    formattedRecord.amount = record.amount || 0;
+                    formattedRecord.date = record.date || '';
+                    formattedRecord.time = record.time || '';
+                    formattedRecord.timestamp = record.timestamp || Date.now();
                 }
                 
-                console.log('Saving to SheetDB with columns:', Object.keys(finalRecord));
-                console.log('Record data:', finalRecord);
+                console.log('📤 Sending to SheetDB with columns:', Object.keys(formattedRecord));
+                console.log('📤 Data:', formattedRecord);
                 
                 const response = await fetch(SHEETDB_URL, {
                     method: 'POST',
@@ -1499,23 +1538,23 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(finalRecord)
+                    body: JSON.stringify(formattedRecord)
                 });
                 
-                console.log('Save response status:', response.status);
+                console.log('Response status:', response.status);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.log('Error response:', errorText);
+                    console.log('❌ Error response:', errorText);
                     throw new Error('HTTP ' + response.status + ': ' + errorText);
                 }
                 
                 const result = await response.json();
-                console.log('Save result:', result);
+                console.log('✅ Save result:', result);
                 return result;
                 
             } catch (error) {
-                console.error('Save error:', error);
+                console.error('❌ Save error:', error);
                 throw error;
             }
         }
@@ -1662,16 +1701,11 @@
                     timestamp: Date.now()
                 };
 
-                console.log('Saving to SheetDB:', newRecord);
+                console.log('📝 Saving to SheetDB:', newRecord);
 
                 // Save to SheetDB
                 const saveResult = await saveDataToSheetDB(newRecord);
-                console.log('Save result:', saveResult);
-
-                // Check if save was successful
-                if (saveResult && saveResult.error) {
-                    throw new Error(saveResult.error);
-                }
+                console.log('✅ Save result:', saveResult);
 
                 // Update local cache
                 cloudDataCache = [newRecord, ...cloudDataCache];
@@ -1709,7 +1743,7 @@
                 resetFormForNewReceipt();
 
             } catch (error) {
-                console.error('Send error:', error);
+                console.error('❌ Send error:', error);
                 showToast('❌ Failed to save: ' + error.message, 'error');
                 showErrorInUI('Database error: ' + error.message);
             } finally {
