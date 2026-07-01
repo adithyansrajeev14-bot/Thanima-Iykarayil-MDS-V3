@@ -6,7 +6,6 @@
     <title>THANIMA IYKARAYIL MDS - Driving School Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== ALL STYLES (same as before) ===== */
         :root {
             --bg-main: #0a0e27;
             --bg-card: #151d3b;
@@ -54,15 +53,9 @@
             z-index: 0;
         }
 
-        /* Print Styles */
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printReceiptArea,
-            #printReceiptArea * {
-                visibility: visible;
-            }
+            body * { visibility: hidden; }
+            #printReceiptArea, #printReceiptArea * { visibility: visible; }
             #printReceiptArea {
                 position: absolute;
                 left: 0;
@@ -76,31 +69,18 @@
                 box-shadow: none !important;
                 padding: 10px !important;
             }
-            .dashboard-container,
-            .sidebar-panel,
-            .main-content-view,
-            header.dashboard-header,
-            .panel:not(:has(#printReceiptArea)),
-            .btn-container,
-            .db-config-box,
-            .form-split-layout > .panel:first-child {
+            .dashboard-container, .sidebar-panel, .main-content-view,
+            header.dashboard-header, .panel:not(:has(#printReceiptArea)),
+            .btn-container, .db-config-box, .form-split-layout > .panel:first-child {
                 display: none !important;
             }
-            .form-split-layout {
-                display: block !important;
-            }
+            .form-split-layout { display: block !important; }
             .panel:has(#printReceiptArea) {
                 background: white !important;
                 border: none !important;
                 box-shadow: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
-            }
-            .receipt-preview .receipt-header h2 {
-                color: #0f172a !important;
-            }
-            .receipt-preview .receipt-total {
-                color: #0f172a !important;
             }
         }
 
@@ -1049,11 +1029,11 @@
                     <div class="panel">
                         <div class="db-config-box">
                             <div class="status-dot" id="cloudStatusDot"></div>
-                            <div id="dbStatusLabel">Status: Checking cloud connection...</div>
+                            <div id="dbStatusLabel">Status: Connecting to database...</div>
                         </div>
                         <div class="cloud-error-box" id="cloudErrorBox">
                             <i class="fas fa-exclamation-circle"></i>
-                            <span id="cloudErrorMessage">Cloud connection error</span>
+                            <span id="cloudErrorMessage">Database error</span>
                         </div>
                         <form id="receiptForm" onsubmit="event.preventDefault();">
                             <div class="form-group">
@@ -1094,8 +1074,8 @@
                                 <button type="button" class="btn btn-secondary" onclick="printReceipt()">
                                     <i class="fas fa-print"></i> Print Receipt
                                 </button>
-                                <button type="button" class="btn btn-primary" onclick="checkCloudConnection()" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
-                                    <i class="fas fa-sync-alt"></i> Check Cloud Connection
+                                <button type="button" class="btn btn-primary" onclick="fetchDataFromSheetDB()" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                                    <i class="fas fa-sync-alt"></i> Refresh Data
                                 </button>
                             </div>
                         </form>
@@ -1146,8 +1126,8 @@
                             <i class="fas fa-archive"></i> Student Payment Archives
                         </h3>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary" onclick="syncWithCloud()" style="width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
-                                <i class="fas fa-sync-alt"></i> Refresh from Cloud
+                            <button class="btn btn-primary" onclick="fetchDataFromSheetDB()" style="width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                                <i class="fas fa-sync-alt"></i> Refresh from Database
                             </button>
                         </div>
                     </div>
@@ -1278,16 +1258,9 @@
 
     <script>
         // ==========================================
-        // YOUR GOOGLE APPS SCRIPT DEPLOYMENT URL
+        // SHEETDB API ENDPOINT - NO CORS ISSUES!
         // ==========================================
-        const googleScriptUrl = "https://script.google.com/macros/s/AKfycbwYRCrPlrt6p6UR9R2U9EApTIyiILjzHRxM9ODNno4AKHynHKINsaqUnh_x9L7XTx78/exec";
-        
-        // ==========================================
-        // USE A CORS PROXY TO BYPASS CORS ISSUES
-        // ==========================================
-        // Free CORS proxy services
-        const CORS_PROXY = "https://api.allorigins.win/raw?url=";
-        // Alternative: "https://corsproxy.io/?" 
+        const SHEETDB_URL = "https://sheetdb.io/api/v1/kogc3zhu7zdfl";
         
         // ==========================================
         // CONFIGURATION
@@ -1382,159 +1355,95 @@
         }
 
         // ==========================================
-        // FETCH WITH CORS PROXY FOR GET REQUESTS
+        // SHEETDB - FETCH DATA (NO CORS ISSUES!)
         // ==========================================
-        async function fetchWithProxy(url) {
-            // Try direct first (works for some cases)
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    return response;
-                }
-            } catch (e) {
-                console.log('Direct fetch failed, trying proxy...');
-            }
-            
-            // Use proxy
-            const proxyUrl = CORS_PROXY + encodeURIComponent(url);
-            const response = await fetch(proxyUrl);
-            return response;
-        }
-
-        // ==========================================
-        // CLOUD CONNECTION CHECK
-        // ==========================================
-        async function checkCloudConnection() {
+        async function fetchDataFromSheetDB() {
             const statusDot = document.getElementById('cloudStatusDot');
             const statusLabel = document.getElementById('dbStatusLabel');
             
             hideErrorInUI();
             statusDot.className = 'status-dot syncing';
-            statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Checking cloud connection...';
+            statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Fetching from database...';
 
             try {
-                const url = googleScriptUrl + '?action=get';
-                const response = await fetchWithProxy(url);
+                const response = await fetch(SHEETDB_URL);
                 
                 if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
                 }
                 
                 const data = await response.json();
+                console.log('SheetDB data:', data);
                 
-                if (data && !data.error) {
+                if (data && data.length > 0) {
+                    // Sanitize data
+                    const sanitizedData = data.map(record => ({
+                        receiptNo: safeTrim(record.receiptNo || record.ReceiptNo || record['receiptNo']),
+                        name: safeTrim(record.name || record.Name || record['name']),
+                        phone: safeTrim(record.phone || record.Phone || record['phone']),
+                        course: safeTrim(record.course || record.Course || record['course']),
+                        mode: safeTrim(record.mode || record.Mode || record['mode']),
+                        amount: parseFloat(record.amount || record.Amount || record['amount']) || 0,
+                        date: safeTrim(record.date || record.Date || record['date']),
+                        time: safeTrim(record.time || record.Time || record['time']),
+                        timestamp: parseInt(record.timestamp || record.Timestamp || record['timestamp']) || Date.now()
+                    }));
+                    
+                    cloudDataCache = sanitizedData;
+                    cloudConnected = true;
+                    
+                    // Update counter
+                    updateCounterFromCloud(sanitizedData);
+                    
+                    statusDot.className = 'status-dot online';
+                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected ✅ (' + sanitizedData.length + ' records)';
+                    hideErrorInUI();
+                    showToast('✅ Loaded ' + sanitizedData.length + ' records from database!');
+                } else {
+                    // No records yet
+                    cloudDataCache = [];
                     cloudConnected = true;
                     statusDot.className = 'status-dot online';
-                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Connected ✅';
-                    await syncWithCloud();
+                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Database Connected (No records yet)';
                     hideErrorInUI();
-                } else {
-                    throw new Error(data?.error || 'Invalid cloud response');
                 }
                 
-            } catch (error) {
-                console.error('Cloud connection check failed:', error);
-                cloudConnected = false;
-                statusDot.className = 'status-dot offline';
-                const errorMsg = 'Cloud offline: ' + error.message;
-                statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
-                showErrorInUI(errorMsg);
-                
-                cloudDataCache = [];
                 loadGroupedStudents();
                 updateDashboardStats();
                 updateReceiptNumberDisplay();
+                
+            } catch (error) {
+                console.error('Fetch error:', error);
+                cloudConnected = false;
+                statusDot.className = 'status-dot offline';
+                const errorMsg = 'Database error: ' + error.message;
+                statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
+                showErrorInUI(errorMsg);
                 showToast('❌ ' + errorMsg, 'error');
             }
         }
 
         // ==========================================
-        // URL SHORTENER
+        // SHEETDB - SAVE DATA (NO CORS ISSUES!)
         // ==========================================
-        async function shortenUrl(longUrl) {
+        async function saveDataToSheetDB(record) {
             try {
-                const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
-                const shortUrl = await response.text();
-                return shortUrl.trim() || longUrl;
-            } catch (error) {
-                console.error('URL shortening failed:', error);
-                return longUrl;
-            }
-        }
-
-        // ==========================================
-        // CLOUD SYNC
-        // ==========================================
-        async function syncWithCloud() {
-            if (isSyncing) return;
-            isSyncing = true;
-
-            const statusDot = document.getElementById('cloudStatusDot');
-            const statusLabel = document.getElementById('dbStatusLabel');
-            
-            statusDot.className = 'status-dot syncing';
-            statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Syncing with Cloud...';
-
-            try {
-                const url = googleScriptUrl + '?action=get';
-                const response = await fetchWithProxy(url);
+                const response = await fetch(SHEETDB_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(record)
+                });
                 
                 if (!response.ok) {
                     throw new Error('HTTP ' + response.status);
                 }
                 
-                let cloudData = await response.json();
-                
-                if (cloudData && !cloudData.error) {
-                    if (!Array.isArray(cloudData)) {
-                        cloudData = [cloudData];
-                    }
-                    
-                    // Sanitize cloud data
-                    cloudData = cloudData.map(record => ({
-                        ...record,
-                        name: safeTrim(record.name),
-                        phone: safeTrim(record.phone),
-                        course: safeTrim(record.course),
-                        mode: safeTrim(record.mode),
-                        receiptNo: safeTrim(record.receiptNo),
-                        amount: parseFloat(record.amount) || 0,
-                        date: safeTrim(record.date),
-                        time: safeTrim(record.time),
-                        timestamp: parseInt(record.timestamp) || Date.now()
-                    }));
-                    
-                    cloudDataCache = cloudData;
-                    cloudConnected = true;
-                    
-                    updateCounterFromCloud(cloudData);
-                    
-                    statusDot.className = 'status-dot online';
-                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Synced ✅ (' + cloudData.length + ' records)';
-                    hideErrorInUI();
-                    showToast('✅ Synced with cloud! ' + cloudData.length + ' records loaded.');
-                } else {
-                    throw new Error(cloudData?.error || 'Invalid cloud response');
-                }
-                
-                loadGroupedStudents();
-                updateDashboardStats();
-                updateReceiptNumberDisplay();
-                
+                return await response.json();
             } catch (error) {
-                console.error('Sync error:', error);
-                cloudConnected = false;
-                statusDot.className = 'status-dot offline';
-                const errorMsg = 'Sync failed: ' + error.message;
-                statusLabel.innerHTML = '<i class="fas fa-database"></i> ' + errorMsg;
-                showErrorInUI(errorMsg);
-                showToast('❌ ' + errorMsg, 'error');
-                
-                cloudDataCache = [];
-                loadGroupedStudents();
-                updateDashboardStats();
-            } finally {
-                isSyncing = false;
+                console.error('Save error:', error);
+                throw error;
             }
         }
 
@@ -1620,11 +1529,25 @@
         }
 
         // ==========================================
-        // SEND WHATSAPP - POST request with CORS proxy
+        // URL SHORTENER
+        // ==========================================
+        async function shortenUrl(longUrl) {
+            try {
+                const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+                const shortUrl = await response.text();
+                return shortUrl.trim() || longUrl;
+            } catch (error) {
+                console.error('URL shortening failed:', error);
+                return longUrl;
+            }
+        }
+
+        // ==========================================
+        // SEND WHATSAPP - Uses SheetDB
         // ==========================================
         async function sendWhatsApp() {
             if (!cloudConnected) {
-                showToast('❌ Cannot generate receipt: Cloud is offline. Please check your connection.', 'error');
+                showToast('❌ Cannot generate receipt: Database is offline. Please check your connection.', 'error');
                 return;
             }
 
@@ -1655,120 +1578,70 @@
                 });
 
                 const newRecord = {
-                    receiptNo,
-                    name,
-                    phone,
-                    course,
-                    mode,
+                    receiptNo: receiptNo,
+                    name: name,
+                    phone: phone,
+                    course: course,
+                    mode: mode,
                     amount: parseFloat(amount),
-                    date,
-                    time,
+                    date: date,
+                    time: time,
                     timestamp: Date.now()
                 };
 
-                console.log('Sending to cloud:', newRecord);
+                console.log('Saving to SheetDB:', newRecord);
 
-                // Try direct POST first
-                try {
-                    const response = await fetch(googleScriptUrl, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(newRecord)
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        if (!result.error) {
-                            // Success!
-                            cloudDataCache = [newRecord, ...cloudDataCache];
-                            await sendWhatsAppMessage(receiptNo, name, phone, course, mode, amount, date, time);
-                            showToast('✅ Receipt #' + receiptNo + ' generated and saved to cloud!');
-                            updateDashboardStats();
-                            updateReceiptNumberDisplay();
-                            resetFormForNewReceipt();
-                            sendBtn.disabled = false;
-                            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Dispatch Receipt via WhatsApp';
-                            return;
-                        }
-                    }
-                } catch (directError) {
-                    console.log('Direct POST failed, trying proxy...');
-                }
+                // Save to SheetDB
+                const saveResult = await saveDataToSheetDB(newRecord);
+                console.log('Save result:', saveResult);
 
-                // If direct fails, try with proxy
-                const proxyUrl = CORS_PROXY + encodeURIComponent(googleScriptUrl);
-                const proxyResponse = await fetch(proxyUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newRecord)
-                });
-
-                if (!proxyResponse.ok) {
-                    throw new Error('Proxy request failed: ' + proxyResponse.status);
-                }
-
-                const result = await proxyResponse.json();
-                console.log('Cloud response:', result);
-
-                if (result.error) {
-                    throw new Error(result.error);
+                if (saveResult && saveResult.error) {
+                    throw new Error(saveResult.error);
                 }
 
                 // Update local cache
                 cloudDataCache = [newRecord, ...cloudDataCache];
 
-                await sendWhatsAppMessage(receiptNo, name, phone, course, mode, amount, date, time);
+                // Generate online receipt link
+                const receiptUrl = `${BASE_URL}?bill=${receiptNo}&name=${encodeURIComponent(name)}&amount=${amount}&course=${encodeURIComponent(course)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}`;
+                
+                let shortUrl = await shortenUrl(receiptUrl);
+                if (!shortUrl || shortUrl.includes('error')) {
+                    shortUrl = receiptUrl;
+                }
 
-                showToast('✅ Receipt #' + receiptNo + ' generated and saved to cloud!');
+                const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
+                               `_Official Digital Receipt_\n\n` +
+                               `📋 *Receipt No:* ${receiptNo}\n` +
+                               `📅 *Date:* ${date} ${time}\n` +
+                               `👤 *Name:* ${name.toUpperCase()}\n` +
+                               `📚 *Course:* ${course}\n` +
+                               `💳 *Payment Mode:* ${mode}\n\n` +
+                               `💰 *Total Paid: ₹ ${parseFloat(amount).toLocaleString('en-IN')}*\n\n` +
+                               `✅ _Verified Electronic Statement_\n` +
+                               `🏫 Govt Approved Institution\n\n` +
+                               `🔗 *View Receipt Online:*\n${shortUrl}`;
+
+                const cleanPhone = phone.replace(/\D/g, '');
+                const formattedPhone = '91' + cleanPhone;
+                window.open(
+                    `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`,
+                    '_blank'
+                );
+
+                showToast('✅ Receipt #' + receiptNo + ' generated and saved to database!');
                 updateDashboardStats();
                 updateReceiptNumberDisplay();
                 resetFormForNewReceipt();
 
             } catch (error) {
                 console.error('Send error:', error);
-                showToast('❌ Failed to save to cloud: ' + error.message, 'error');
-                showErrorInUI('Cloud error: ' + error.message);
-                // Refresh cloud status
-                await checkCloudConnection();
+                showToast('❌ Failed to save: ' + error.message, 'error');
+                showErrorInUI('Database error: ' + error.message);
             } finally {
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Dispatch Receipt via WhatsApp';
             }
-        }
-
-        // ==========================================
-        // SEND WHATSAPP MESSAGE
-        // ==========================================
-        async function sendWhatsAppMessage(receiptNo, name, phone, course, mode, amount, date, time) {
-            const receiptUrl = `${BASE_URL}?bill=${receiptNo}&name=${encodeURIComponent(name)}&amount=${amount}&course=${encodeURIComponent(course)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}`;
-            
-            let shortUrl = await shortenUrl(receiptUrl);
-            if (!shortUrl || shortUrl.includes('error')) {
-                shortUrl = receiptUrl;
-            }
-
-            const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
-                           `_Official Digital Receipt_\n\n` +
-                           `📋 *Receipt No:* ${receiptNo}\n` +
-                           `📅 *Date:* ${date} ${time}\n` +
-                           `👤 *Name:* ${name.toUpperCase()}\n` +
-                           `📚 *Course:* ${course}\n` +
-                           `💳 *Payment Mode:* ${mode}\n\n` +
-                           `💰 *Total Paid: ₹ ${parseFloat(amount).toLocaleString('en-IN')}*\n\n` +
-                           `✅ _Verified Electronic Statement_\n` +
-                           `🏫 Govt Approved Institution\n\n` +
-                           `🔗 *View Receipt Online:*\n${shortUrl}`;
-
-            const cleanPhone = phone.replace(/\D/g, '');
-            const formattedPhone = '91' + cleanPhone;
-            window.open(
-                `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`,
-                '_blank'
-            );
         }
 
         function resetFormForNewReceipt() {
@@ -1802,8 +1675,8 @@
                         <i class="fas fa-archive" style="font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5;"></i>
                         <h3>No Records Yet</h3>
                         <p style="margin-top: 10px;">Start processing payments to build your archive</p>
-                        <button class="btn btn-primary" onclick="syncWithCloud()" style="margin-top: 20px; width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
-                            <i class="fas fa-cloud-download-alt"></i> Load from Cloud
+                        <button class="btn btn-primary" onclick="fetchDataFromSheetDB()" style="margin-top: 20px; width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                            <i class="fas fa-cloud-download-alt"></i> Load from Database
                         </button>
                     </div>`;
                 return;
@@ -1909,11 +1782,6 @@
         }
 
         async function resendWhatsApp(receiptNo, name, phone, course, mode, amount, date, time) {
-            if (!cloudConnected) {
-                showToast('❌ Cannot resend: Cloud is offline. Please check your connection.', 'error');
-                return;
-            }
-
             const receiptUrl = `${BASE_URL}?bill=${receiptNo}&name=${encodeURIComponent(name)}&amount=${amount}&course=${encodeURIComponent(course)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}`;
             
             let shortUrl = await shortenUrl(receiptUrl);
@@ -2037,7 +1905,7 @@
                 errorLabel.style.display = 'none';
                 updateDashboardStats();
                 showToast('🎉 Welcome back, ' + userInput + '!');
-                checkCloudConnection();
+                fetchDataFromSheetDB();
             } else {
                 errorLabel.innerText = "Invalid Operator Credentials.";
                 errorLabel.style.display = 'block';
@@ -2223,7 +2091,7 @@
                 updateDashboardStats();
                 updateReceiptNumberDisplay();
                 updatePreview();
-                setTimeout(checkCloudConnection, 1000);
+                setTimeout(fetchDataFromSheetDB, 1000);
             }
 
             // Keyboard shortcuts
