@@ -994,29 +994,6 @@
             margin-top: 5px;
         }
 
-        .cloud-status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .cloud-status-badge.online {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success-green);
-        }
-
-        .cloud-status-badge.offline {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--error-red);
-        }
-
-        .cloud-status-badge.syncing {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--warning-orange);
-        }
-
         @media (max-width: 480px) {
             .login-card { padding: 25px 20px; }
             .panel { padding: 15px; }
@@ -1378,12 +1355,15 @@
 
     <script>
         // ==========================================
+        // YOUR GOOGLE APPS SCRIPT DEPLOYMENT URL
+        // ==========================================
+        const googleScriptUrl = "https://script.google.com/macros/s/AKfycbzXs3pnRbmNz1B_seHRjt6mwMRicAhvGO3aTY8tU5UECvWT_aIuuZUxxUK45bQwnt4Z/exec";
+        
+        // ==========================================
         // CONFIGURATION
         // ==========================================
         const AUTHORIZED_EMAIL = "adithyansrajeev14@gmail.com";
         const AUTHORIZED_NAME = "Adithyan S Rajeev";
-        const googleScriptUrl = "https://script.google.com/macros/s/AKfycbwG3X2gFZmnAmMii2TjukV-NuCWCOnzzmekYKcGi4W0vtf81HuYAgH5CApHyWoXs1iv/exec";
-        
         const BASE_URL = window.location.href.split('?')[0];
 
         // ==========================================
@@ -1475,7 +1455,7 @@
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
 
                 const response = await fetch(googleScriptUrl + '?action=ping', {
                     method: 'GET',
@@ -1488,21 +1468,22 @@
                 clearTimeout(timeoutId);
 
                 if (response.ok) {
-                    cloudConnected = true;
-                    statusDot.className = 'status-dot online';
-                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Connected ✅';
-                    // Now sync data
-                    await syncWithCloud();
-                } else {
-                    throw new Error('Cloud responded with status: ' + response.status);
+                    const data = await response.json();
+                    if (data && data.status === 'ok') {
+                        cloudConnected = true;
+                        statusDot.className = 'status-dot online';
+                        statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Connected ✅';
+                        await syncWithCloud();
+                        return;
+                    }
                 }
+                throw new Error('Invalid cloud response');
             } catch (error) {
                 console.error('Cloud connection check failed:', error);
                 cloudConnected = false;
                 statusDot.className = 'status-dot offline';
                 statusLabel.innerHTML = '<i class="fas fa-database"></i> Status: Local Mode (Cloud offline) - Using local data';
                 
-                // Load local data
                 const localData = JSON.parse(localStorage.getItem('driving_school_history')) || [];
                 cloudDataCache = localData;
                 loadGroupedStudents();
@@ -1544,7 +1525,6 @@
             statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Syncing with Cloud...';
 
             try {
-                // Try to fetch from cloud with timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -1559,14 +1539,13 @@
                 clearTimeout(timeoutId);
 
                 if (!response.ok) {
-                    throw new Error('Cloud fetch failed with status: ' + response.status);
+                    throw new Error('HTTP ' + response.status);
                 }
 
                 const cloudData = await response.json();
                 console.log('Cloud data received:', cloudData);
 
-                if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-                    // Merge with local
+                if (cloudData && !cloudData.error) {
                     let localHistory = JSON.parse(localStorage.getItem('driving_school_history')) || [];
                     let mergedData = mergeData(localHistory, cloudData);
                     
@@ -1580,11 +1559,7 @@
                     statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Synced ✅ (' + mergedData.length + ' records)';
                     showToast('✅ Synced with cloud! ' + mergedData.length + ' records loaded.');
                 } else {
-                    // Cloud returned empty, use local
-                    const localData = JSON.parse(localStorage.getItem('driving_school_history')) || [];
-                    cloudDataCache = localData;
-                    statusDot.className = 'status-dot online';
-                    statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Connected (No records yet)';
+                    throw new Error(cloudData?.error || 'Invalid cloud response');
                 }
                 
                 loadGroupedStudents();
@@ -1763,6 +1738,7 @@
             let history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
             history.unshift(newRecord);
             localStorage.setItem('driving_school_history', JSON.stringify(history));
+            cloudDataCache = [newRecord, ...cloudDataCache];
 
             // Try to send to cloud
             try {
@@ -1773,8 +1749,6 @@
                     body: JSON.stringify(newRecord)
                 });
                 console.log('Data sent to cloud');
-                // Update cache
-                cloudDataCache = [newRecord, ...cloudDataCache];
             } catch (err) {
                 console.log('Cloud send failed, data saved locally:', err);
             }
@@ -2256,7 +2230,6 @@
                 updateDashboardStats();
                 updateReceiptNumberDisplay();
                 updatePreview();
-                // Check cloud connection
                 setTimeout(checkCloudConnection, 1000);
             }
 
