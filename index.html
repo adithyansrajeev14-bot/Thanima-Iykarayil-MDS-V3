@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THANIMA IYKARAYIL MDS - Driving School Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --bg-main: #0a0e27;
@@ -21,7 +19,6 @@
             --error-red: #ef4444;
             --warning-orange: #f59e0b;
             --google-blue: #4285f4;
-            --google-red: #ea4335;
             --gradient-1: linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%);
             --gradient-2: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
@@ -43,7 +40,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Animated Background */
         body::before {
             content: '';
             position: fixed;
@@ -58,7 +54,6 @@
             z-index: 0;
         }
 
-        /* Login Screen */
         #loginScreen {
             position: fixed;
             top: 0;
@@ -82,6 +77,11 @@
         @keyframes slideUp {
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .login-card {
@@ -115,11 +115,6 @@
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
         .login-card h2 {
             color: var(--accent-cyan);
             margin-bottom: 8px;
@@ -133,7 +128,6 @@
             margin-bottom: 30px;
         }
 
-        /* Divider */
         .divider {
             display: flex;
             align-items: center;
@@ -171,6 +165,8 @@
             gap: 12px;
             transition: all 0.3s ease;
             margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
         }
 
         .google-btn:hover {
@@ -183,50 +179,14 @@
             transform: translateY(0);
         }
 
-        .google-btn img {
-            width: 20px;
-            height: 20px;
+        .google-btn.loading {
+            pointer-events: none;
+            opacity: 0.8;
         }
 
-        .google-btn i {
-            color: var(--google-blue);
+        .google-btn i.fa-google {
+            color: #4285f4;
             font-size: 1.2rem;
-        }
-
-        /* Input Groups */
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-group i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            transition: var(--transition);
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 14px 14px 14px 45px;
-            background-color: var(--bg-input);
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 1rem;
-            color: var(--text-light);
-            outline: none;
-            transition: var(--transition);
-        }
-
-        .input-group input:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-        }
-
-        .input-group input:focus ~ i {
-            color: var(--accent-cyan);
         }
 
         /* Google User Info */
@@ -248,6 +208,7 @@
             color: var(--accent-cyan);
             font-weight: 600;
             margin-bottom: 5px;
+            word-break: break-all;
         }
 
         .google-user-info .user-name {
@@ -265,7 +226,38 @@
             margin-top: 8px;
         }
 
-        /* Dashboard Layout */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background-color: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-light);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
         .dashboard-container {
             display: flex;
             flex-direction: column;
@@ -304,10 +296,6 @@
             padding: 25px 20px;
             text-align: center;
             border-bottom: 1px solid var(--border-color);
-            background: var(--gradient-1);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .sidebar-brand h3 {
@@ -315,12 +303,15 @@
             letter-spacing: 1px;
             font-weight: 800;
             margin-bottom: 5px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .sidebar-brand p {
             color: var(--text-muted);
             font-size: 0.75rem;
-            -webkit-text-fill-color: var(--text-muted);
         }
 
         .sidebar-menu {
@@ -359,7 +350,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            position: relative;
         }
 
         @media (min-width: 992px) {
@@ -491,10 +481,6 @@
             gap: 8px;
         }
 
-        label i {
-            font-size: 1rem;
-        }
-
         input,
         select {
             width: 100%;
@@ -601,7 +587,6 @@
             color: var(--accent-cyan);
         }
 
-        /* Receipt Preview */
         .receipt-preview {
             border: 2px dashed var(--accent-cyan);
             padding: 25px;
@@ -652,7 +637,6 @@
             border-top: 3px solid var(--accent-cyan);
         }
 
-        /* Folder Styles */
         .folder-box {
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -732,14 +716,8 @@
         }
 
         @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .nested-payment-card {
@@ -826,7 +804,6 @@
             display: none;
         }
 
-        /* Toast Notifications */
         .toast {
             position: fixed;
             top: 20px;
@@ -843,14 +820,8 @@
         }
 
         @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         .search-input-wrapper {
@@ -895,23 +866,6 @@
             border: 1px solid var(--border-color);
         }
 
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Logout button in sidebar */
         .sidebar-footer {
             padding: 20px;
             margin-top: auto;
@@ -939,16 +893,54 @@
             transform: translateY(-2px);
         }
 
+        .google-auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .google-auth-modal.active {
+            display: flex;
+        }
+
+        .google-auth-content {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .google-auth-content .google-logo {
+            font-size: 3rem;
+            color: #4285f4;
+            margin-bottom: 15px;
+        }
+
+        .sync-spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 480px) {
-            .login-card {
-                padding: 25px 20px;
-            }
-            .panel {
-                padding: 15px;
-            }
-            .btn {
-                padding: 12px 16px;
-            }
+            .login-card { padding: 25px 20px; }
+            .panel { padding: 15px; }
+            .btn { padding: 12px 16px; }
         }
     </style>
 </head>
@@ -964,7 +956,7 @@
             <p class="subtitle">THANIMA IYKARAYIL MDS Terminal</p>
 
             <!-- Google Sign-In Button -->
-            <button class="google-btn" onclick="handleGoogleSignIn()">
+            <button class="google-btn" onclick="openGoogleAuthModal()">
                 <i class="fab fa-google"></i> Continue with Google
             </button>
 
@@ -997,6 +989,30 @@
             <p style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">
                 <i class="fas fa-shield-alt"></i> Secured Government Approved Portal
             </p>
+        </div>
+    </div>
+
+    <!-- Google Authentication Modal -->
+    <div class="google-auth-modal" id="googleAuthModal">
+        <div class="google-auth-content">
+            <div class="google-logo">
+                <i class="fab fa-google"></i>
+            </div>
+            <h3 style="color: var(--accent-cyan); margin-bottom: 10px;">Google Sign-In</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                Enter your Google email to verify
+            </p>
+            <div class="input-group">
+                <input type="email" id="googleEmailInput" placeholder="Enter Google email address" value="adithyansrajeev14@gmail.com">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <p id="googleAuthError" style="color: var(--error-red); display: none; margin-bottom: 12px; font-size: 0.85rem;"></p>
+            <button class="btn btn-primary" onclick="verifyGoogleEmail()" id="googleVerifyBtn">
+                <i class="fab fa-google"></i> Verify & Continue
+            </button>
+            <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeGoogleAuthModal()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
         </div>
     </div>
 
@@ -1056,11 +1072,11 @@
                     <div class="panel">
                         <div class="db-config-box">
                             <div class="status-dot"></div>
-                            <div id="dbStatusLabel">Status: Local Memory Active (Cloud Syncing Ready)</div>
+                            <div id="dbStatusLabel">Status: Syncing with Cloud Database...</div>
                         </div>
                         <form id="receiptForm" onsubmit="event.preventDefault();">
                             <div class="form-group">
-                                <label><i class="fas fa-hashtag"></i> Receipt Number (Auto-Sequential)</label>
+                                <label><i class="fas fa-hashtag"></i> Receipt Number (Sequential)</label>
                                 <input type="text" id="receiptNo" readonly>
                             </div>
                             <div class="form-group">
@@ -1088,7 +1104,7 @@
                                 <input type="number" id="amount" placeholder="Enter payment amount" min="0" step="1" oninput="updatePreview()">
                             </div>
                             <div class="btn-container">
-                                <button type="button" class="btn btn-success" id="submitBtn" onclick="sendWhatsApp()">
+                                <button type="button" class="btn btn-success" onclick="sendWhatsApp()">
                                     <i class="fas fa-paper-plane"></i> Dispatch Receipt via WhatsApp
                                 </button>
                                 <button type="button" class="btn btn-outline" onclick="resetFormForNewReceipt()">
@@ -1096,6 +1112,9 @@
                                 </button>
                                 <button type="button" class="btn btn-secondary" onclick="printReceipt()">
                                     <i class="fas fa-print"></i> Print Receipt
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="syncWithCloud()" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                                    <i class="fas fa-cloud-upload-alt"></i> Sync with Cloud
                                 </button>
                             </div>
                         </form>
@@ -1130,7 +1149,7 @@
                                 </div>
                                 <div class="receipt-total" id="previewAmount">₹ 0</div>
                                 <div style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                                    <i class="fas fa-check-circle" style="color: var(--success-green);"></i> Verified electronic document. No manual signature required.
+                                    <i class="fas fa-check-circle" style="color: var(--success-green);"></i> Verified electronic document
                                 </div>
                             </div>
                         </div>
@@ -1145,9 +1164,14 @@
                         <h3 style="color: var(--accent-cyan);">
                             <i class="fas fa-archive"></i> Student Payment Archives
                         </h3>
-                        <button class="btn btn-danger" onclick="clearAllHistory()" style="width: auto;">
-                            <i class="fas fa-trash-alt"></i> Clear All History
-                        </button>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="syncWithCloud()" style="width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                                <i class="fas fa-sync-alt"></i> Refresh from Cloud
+                            </button>
+                            <button class="btn btn-danger" onclick="clearAllHistory()" style="width: auto;">
+                                <i class="fas fa-trash-alt"></i> Clear All History
+                            </button>
+                        </div>
                     </div>
                     <div class="search-input-wrapper" style="margin-bottom: 25px;">
                         <i class="fas fa-search"></i>
@@ -1155,8 +1179,8 @@
                     </div>
                     <div id="groupedFoldersContainer">
                         <div style="text-align: center; color: var(--text-muted); padding: 40px;">
-                            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
-                            <p>No records found. Start adding payments to build the archive.</p>
+                            <i class="fas fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                            <p>Loading data from cloud...</p>
                         </div>
                     </div>
                 </div>
@@ -1228,13 +1252,21 @@
     </div>
 
     <script>
-        // Authorized email for Google Sign-In
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
         const AUTHORIZED_EMAIL = "adithyansrajeev14@gmail.com";
+        const AUTHORIZED_NAME = "Adithyan S Rajeev";
+        // IMPORTANT: Replace this with your actual Google Apps Script web app URL
         const googleScriptUrl = "https://script.google.com/macros/s/AKfycbwG3X2gFZmnAmMii2TjukV-NuCWCOnzzmekYKcGi4W0vtf81HuYAgH5CApHyWoXs1iv/exec";
-        
-        let expandedFolders = {};
 
-        // Default Courses List
+        // ==========================================
+        // STATE
+        // ==========================================
+        let expandedFolders = {};
+        let isSyncing = false;
+        let cloudDataCache = [];
+
         const defaultCoursesList = [
             "Fresh Driving Learners License Track",
             "Two Wheeler Training (Scooter/Motorcycle)",
@@ -1243,7 +1275,203 @@
             "License Renewal & Documentation"
         ];
 
-        // Sequential Receipt Counter Management
+        // ==========================================
+        // GOOGLE AUTH FUNCTIONS
+        // ==========================================
+        function openGoogleAuthModal() {
+            document.getElementById('googleAuthModal').classList.add('active');
+            document.getElementById('googleEmailInput').focus();
+            document.getElementById('googleAuthError').style.display = 'none';
+        }
+
+        function closeGoogleAuthModal() {
+            document.getElementById('googleAuthModal').classList.remove('active');
+            document.getElementById('googleEmailInput').value = AUTHORIZED_EMAIL;
+            document.getElementById('googleAuthError').style.display = 'none';
+        }
+
+        function verifyGoogleEmail() {
+            const emailInput = document.getElementById('googleEmailInput').value.trim().toLowerCase();
+            const errorElement = document.getElementById('googleAuthError');
+            const verifyBtn = document.getElementById('googleVerifyBtn');
+
+            if (!emailInput) {
+                errorElement.textContent = 'Please enter your Google email address.';
+                errorElement.style.display = 'block';
+                return;
+            }
+
+            verifyBtn.classList.add('loading');
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+            setTimeout(() => {
+                if (emailInput === AUTHORIZED_EMAIL.toLowerCase()) {
+                    errorElement.style.display = 'none';
+                    document.getElementById('googleUserEmail').textContent = emailInput;
+                    document.getElementById('googleUserName').textContent = AUTHORIZED_NAME;
+                    document.getElementById('googleUserInfo').classList.add('show');
+                    closeGoogleAuthModal();
+                    setTimeout(() => {
+                        performGoogleLogin(emailInput);
+                    }, 500);
+                    showToast('✅ Google authentication successful! Welcome ' + AUTHORIZED_NAME + '!');
+                } else {
+                    errorElement.innerHTML = '<i class="fas fa-exclamation-circle"></i> Access denied! Only <strong>' + AUTHORIZED_EMAIL + '</strong> is authorized.';
+                    errorElement.style.display = 'block';
+                    verifyBtn.classList.remove('loading');
+                    verifyBtn.innerHTML = '<i class="fab fa-google"></i> Verify & Continue';
+                    showToast('❌ Unauthorized email address!', 'error');
+                }
+            }, 1500);
+        }
+
+        function performGoogleLogin(email) {
+            sessionStorage.setItem('auth_state', 'verified');
+            sessionStorage.setItem('auth_method', 'google');
+            sessionStorage.setItem('auth_email', email);
+            document.getElementById('loginScreen').style.display = 'none';
+            updateDashboardStats();
+            // Load data from cloud after login
+            syncWithCloud();
+        }
+
+        // ==========================================
+        // CLOUD SYNC FUNCTIONS
+        // ==========================================
+        async function syncWithCloud() {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            const statusLabel = document.getElementById('dbStatusLabel');
+            statusLabel.innerHTML = '<span class="sync-spinner"><i class="fas fa-spinner fa-spin"></i></span> Syncing with Cloud Database...';
+
+            try {
+                // STEP 1: Fetch all data from Google Sheets
+                const response = await fetch(googleScriptUrl + '?action=get', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch from cloud');
+                }
+
+                const cloudData = await response.json();
+                console.log('Cloud data received:', cloudData);
+
+                // STEP 2: Merge with local data (cloud takes priority)
+                let localHistory = JSON.parse(localStorage.getItem('driving_school_history')) || [];
+                let mergedData = mergeData(localHistory, cloudData);
+
+                // STEP 3: Save merged data to local storage
+                localStorage.setItem('driving_school_history', JSON.stringify(mergedData));
+
+                // STEP 4: Update the counter from cloud data
+                updateCounterFromCloud(mergedData);
+
+                // STEP 5: Update UI
+                cloudDataCache = mergedData;
+                updateDashboardStats();
+                loadGroupedStudents();
+                updateReceiptNumberDisplay();
+
+                statusLabel.innerHTML = '<i class="fas fa-cloud"></i> Status: Cloud Synced ✅ (' + mergedData.length + ' records)';
+                showToast('✅ Synced with cloud! ' + mergedData.length + ' records loaded.');
+            } catch (error) {
+                console.error('Sync error:', error);
+                statusLabel.innerHTML = '<i class="fas fa-database"></i> Status: Local Mode (Cloud offline)';
+                // Still load local data
+                const localData = JSON.parse(localStorage.getItem('driving_school_history')) || [];
+                cloudDataCache = localData;
+                loadGroupedStudents();
+                updateDashboardStats();
+                showToast('⚠️ Cloud sync failed. Using local data.', 'error');
+            } finally {
+                isSyncing = false;
+            }
+        }
+
+        function mergeData(localData, cloudData) {
+            if (!cloudData || !Array.isArray(cloudData) || cloudData.length === 0) {
+                return localData;
+            }
+
+            // Create a map of existing records by receipt number
+            const receiptMap = new Map();
+            localData.forEach(record => {
+                if (record.receiptNo) {
+                    receiptMap.set(record.receiptNo, record);
+                }
+            });
+
+            // Add or update from cloud
+            cloudData.forEach(cloudRecord => {
+                if (cloudRecord.receiptNo) {
+                    // Cloud record takes precedence
+                    receiptMap.set(cloudRecord.receiptNo, cloudRecord);
+                } else if (cloudRecord.name && cloudRecord.phone && cloudRecord.amount) {
+                    // If no receipt number, try to match by name+phone+amount+date
+                    const key = `${cloudRecord.name}_${cloudRecord.phone}_${cloudRecord.amount}_${cloudRecord.date}`;
+                    let found = false;
+                    for (let [existingKey, existingRecord] of receiptMap) {
+                        const existingKey2 = `${existingRecord.name}_${existingRecord.phone}_${existingRecord.amount}_${existingRecord.date}`;
+                        if (existingKey2 === key) {
+                            receiptMap.set(existingKey, { ...existingRecord, ...cloudRecord });
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        // Generate a receipt number if missing
+                        if (!cloudRecord.receiptNo) {
+                            const counter = parseInt(localStorage.getItem('receipt_counter')) || 0;
+                            cloudRecord.receiptNo = 'TI-' + (counter + 1).toString().padStart(6, '0');
+                        }
+                        receiptMap.set(cloudRecord.receiptNo, cloudRecord);
+                    }
+                }
+            });
+
+            // Convert back to array and sort by timestamp (newest first)
+            const merged = Array.from(receiptMap.values());
+            merged.sort((a, b) => {
+                const aTime = a.timestamp || a.timestampMs || 0;
+                const bTime = b.timestamp || b.timestampMs || 0;
+                return bTime - aTime;
+            });
+
+            return merged;
+        }
+
+        function updateCounterFromCloud(cloudData) {
+            if (!cloudData || cloudData.length === 0) return;
+
+            // Find highest receipt number
+            let maxNumber = 0;
+            cloudData.forEach(record => {
+                if (record.receiptNo) {
+                    const match = record.receiptNo.match(/TI-(\d+)/);
+                    if (match && match[1]) {
+                        const num = parseInt(match[1]);
+                        if (num > maxNumber) maxNumber = num;
+                    }
+                }
+            });
+
+            if (maxNumber > 0) {
+                // Update counter to be higher than max existing
+                const currentCounter = parseInt(localStorage.getItem('receipt_counter')) || 0;
+                if (maxNumber > currentCounter) {
+                    localStorage.setItem('receipt_counter', maxNumber.toString());
+                }
+            }
+        }
+
+        // ==========================================
+        // WHATSAPP / RECEIPT FUNCTIONS
+        // ==========================================
         function getNextReceiptNumber() {
             let counter = parseInt(localStorage.getItem('receipt_counter')) || 0;
             counter++;
@@ -1256,322 +1484,8 @@
             return 'TI-' + (counter + 1).toString().padStart(6, '0');
         }
 
-        // Toast Notification System
-        function showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.borderColor = type === 'success' ? 'var(--success-green)' : 'var(--error-red)';
-            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
-            toastContainer.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.5s';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-        // Modal System
-        function showModal(message, confirmCallback) {
-            const modal = document.getElementById('confirmationModal');
-            document.getElementById('modalMessage').textContent = message;
-            const confirmBtn = document.getElementById('modalConfirmBtn');
-            confirmBtn.onclick = function() {
-                confirmCallback();
-                closeModal();
-            };
-            modal.classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('confirmationModal').classList.remove('active');
-        }
-
-        // Google Sign-In Handler
-        function handleGoogleSignIn() {
-            // Check if Google Identity Services is available
-            if (typeof google !== 'undefined' && google.accounts) {
-                // Initialize Google Sign-In
-                const client = google.accounts.oauth2.initCodeClient({
-                    client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with actual client ID
-                    scope: 'email profile',
-                    ux_mode: 'popup',
-                    callback: (response) => {
-                        if (response.code) {
-                            // Exchange code for tokens (in production, send to backend)
-                            // For demo, we'll simulate the email verification
-                            handleGoogleAuthSuccess(response);
-                        }
-                    },
-                });
-                client.requestCode();
-            } else {
-                // Fallback for demo/development
-                showToast('Google Sign-In simulation mode', 'success');
-                setTimeout(() => {
-                    const simulatedEmail = prompt('Enter your Google email to verify:', AUTHORIZED_EMAIL);
-                    if (simulatedEmail && simulatedEmail.toLowerCase().trim() === AUTHORIZED_EMAIL.toLowerCase()) {
-                        handleGoogleAuthSuccess({ simulatedEmail: simulatedEmail });
-                    } else {
-                        showToast('Access denied! Unauthorized email address.', 'error');
-                    }
-                }, 500);
-            }
-        }
-
-        function handleGoogleAuthSuccess(response) {
-            const userEmail = response.simulatedEmail || AUTHORIZED_EMAIL;
-            
-            if (userEmail.toLowerCase().trim() === AUTHORIZED_EMAIL.toLowerCase()) {
-                // Show authorized user info
-                document.getElementById('googleUserEmail').textContent = userEmail;
-                document.getElementById('googleUserName').textContent = 'Adithyan S Rajeev';
-                document.getElementById('googleUserInfo').classList.add('show');
-                
-                // Auto-login after 1.5 seconds
-                setTimeout(() => {
-                    sessionStorage.setItem('auth_state', 'verified');
-                    sessionStorage.setItem('auth_method', 'google');
-                    sessionStorage.setItem('auth_email', userEmail);
-                    document.getElementById('loginScreen').style.display = 'none';
-                    updateDashboardStats();
-                    showToast('Welcome! Authenticated via Google.');
-                }, 1500);
-            } else {
-                showToast('Access denied! Only adithyansrajeev14@gmail.com is authorized.', 'error');
-            }
-        }
-
-        // Initialize System
-        window.onload = function() {
-            // Set default credentials if not present
-            if (!localStorage.getItem('admin_user')) localStorage.setItem('admin_user', 'Arun9666');
-            if (!localStorage.getItem('admin_pass')) localStorage.setItem('admin_pass', 'A6669n');
-            if (!localStorage.getItem('driving_school_courses')) {
-                localStorage.setItem('driving_school_courses', JSON.stringify(defaultCoursesList));
-            }
-            // Initialize receipt counter if not exists
-            if (!localStorage.getItem('receipt_counter')) {
-                localStorage.setItem('receipt_counter', '1000'); // Start from 1000
-            }
-
-            // Populate settings fields
-            document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
-            document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
-
-            // Render courses
-            renderCourseMenusUI();
-
-            // Check URL params for customer view
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('bill')) {
-                document.body.classList.add('customer-view-mode');
-                renderOnlineInvoiceMode(urlParams);
-            } else {
-                // Check authentication state
-                if (sessionStorage.getItem('auth_state') === 'verified') {
-                    document.getElementById('loginScreen').style.display = 'none';
-                    updateDashboardStats();
-                }
-                updateReceiptNumberDisplay();
-                updatePreview();
-                fetchSheetsCloudData();
-            }
-
-            // Add keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey || e.metaKey) {
-                    switch(e.key) {
-                        case 'b':
-                            e.preventDefault();
-                            switchConsoleTab('billing');
-                            break;
-                        case 's':
-                            e.preventDefault();
-                            switchConsoleTab('students');
-                            break;
-                        case ',':
-                            e.preventDefault();
-                            switchConsoleTab('settings');
-                            break;
-                    }
-                }
-            });
-
-            // Add enter key support for login
-            document.getElementById('loginPass').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') handleAuthSubmit();
-            });
-        };
-
-        // Update Dashboard Statistics
-        function updateDashboardStats() {
-            const history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
-            document.getElementById('totalTransactions').textContent = history.length;
-
-            const today = new Date().toLocaleDateString('en-IN');
-            const todayTotal = history
-                .filter(record => record.date === today)
-                .reduce((sum, record) => sum + parseFloat(record.amount || 0), 0);
-            document.getElementById('todayRevenue').textContent = '₹' + todayTotal.toLocaleString('en-IN');
-        }
-
-        // Render Course Menus
-        function renderCourseMenusUI() {
-            const currentCourses = JSON.parse(localStorage.getItem('driving_school_courses')) || defaultCoursesList;
-            const billingSelect = document.getElementById('course');
-            billingSelect.innerHTML = currentCourses.map(course => 
-                `<option value="${course}">${course}</option>`
-            ).join('');
-
-            const managementList = document.getElementById('courseConfigurationManagerList');
-            managementList.innerHTML = currentCourses.map((course, idx) => `
-                <li class="course-manager-item">
-                    <span><i class="fas fa-graduation-cap" style="margin-right: 8px;"></i>${course}</span>
-                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.85rem;" 
-                            onclick="removeCustomCourseOption(${idx})">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
-                </li>
-            `).join('');
-            updatePreview();
-        }
-
-        // Course Management Functions
-        function addCustomCourseOption() {
-            const inputField = document.getElementById('newCourseInput');
-            const newTitle = inputField.value.trim();
-            if (!newTitle) {
-                showToast('Please enter a course name', 'error');
-                return;
-            }
-            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
-            if (courses.includes(newTitle)) {
-                showToast('Course already exists!', 'error');
-                return;
-            }
-            courses.push(newTitle);
-            localStorage.setItem('driving_school_courses', JSON.stringify(courses));
-            inputField.value = '';
-            renderCourseMenusUI();
-            showToast('Course added successfully!');
-        }
-
-        function removeCustomCourseOption(indexPosition) {
-            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
-            if (courses.length <= 1) {
-                showToast('Cannot delete the last course option', 'error');
-                return;
-            }
-            const courseName = courses[indexPosition];
-            showModal(`Are you sure you want to delete "${courseName}"?`, function() {
-                courses.splice(indexPosition, 1);
-                localStorage.setItem('driving_school_courses', JSON.stringify(courses));
-                renderCourseMenusUI();
-                showToast('Course removed successfully');
-            });
-        }
-
-        // Authentication Functions
-        function handleAuthSubmit() {
-            const userInput = document.getElementById('loginUser').value.trim();
-            const passInput = document.getElementById('loginPass').value.trim();
-            const errorLabel = document.getElementById('loginError');
-
-            if (!userInput || !passInput) {
-                errorLabel.innerText = "Please fill in all fields.";
-                errorLabel.style.display = 'block';
-                return;
-            }
-
-            if (userInput === localStorage.getItem('admin_user') && 
-                passInput === localStorage.getItem('admin_pass')) {
-                sessionStorage.setItem('auth_state', 'verified');
-                sessionStorage.setItem('auth_method', 'manual');
-                document.getElementById('loginScreen').style.display = 'none';
-                errorLabel.style.display = 'none';
-                updateDashboardStats();
-                showToast('Welcome back, ' + userInput + '!');
-            } else {
-                errorLabel.innerText = "Invalid Operator Credentials.";
-                errorLabel.style.display = 'block';
-                document.getElementById('loginPass').value = '';
-            }
-        }
-
-        function handleLogout() {
-            showModal('Are you sure you want to logout?', function() {
-                sessionStorage.removeItem('auth_state');
-                sessionStorage.removeItem('auth_method');
-                sessionStorage.removeItem('auth_email');
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('loginUser').value = '';
-                document.getElementById('loginPass').value = '';
-                document.getElementById('googleUserInfo').classList.remove('show');
-            });
-        }
-
-        function saveSecurityCredentials() {
-            const oldPassInput = document.getElementById('settingsOldPass').value;
-            const newUser = document.getElementById('settingsUser').value.trim();
-            const newPass = document.getElementById('settingsPass').value.trim();
-
-            if (oldPassInput !== localStorage.getItem('admin_pass')) {
-                showToast('Current passcode incorrect!', 'error');
-                return;
-            }
-            if (!newUser || !newPass) {
-                showToast('Fields cannot be blank!', 'error');
-                return;
-            }
-            if (newPass.length < 4) {
-                showToast('Password must be at least 4 characters!', 'error');
-                return;
-            }
-
-            localStorage.setItem('admin_user', newUser);
-            localStorage.setItem('admin_pass', newPass);
-            document.getElementById('settingsOldPass').value = '';
-            document.getElementById('settingsPass').value = '';
-            showToast('Credentials updated successfully!');
-        }
-
-        // Tab Navigation
-        function switchConsoleTab(tabId) {
-            document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-
-            const tabElement = document.getElementById('tab-' + tabId);
-            const navElement = document.getElementById('nav-' + tabId);
-
-            if (tabElement) tabElement.classList.add('active');
-            if (navElement) navElement.classList.add('active');
-
-            const titles = {
-                'billing': 'Terminal Billing Form',
-                'students': 'Student Payment Archives',
-                'settings': 'System Control Settings'
-            };
-            document.getElementById('topNavTitle').textContent = titles[tabId] || 'Dashboard';
-
-            if (tabId === 'students') {
-                loadGroupedStudents();
-                updateDashboardStats();
-            } else if (tabId === 'settings') {
-                document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
-                document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
-                renderCourseMenusUI();
-            }
-        }
-
-        // Receipt Functions
         function updateReceiptNumberDisplay() {
             document.getElementById('receiptNo').value = getCurrentReceiptNumber();
-        }
-
-        function generateNewReceiptNo() {
-            // This now just updates the display with the next sequential number
-            updateReceiptNumberDisplay();
         }
 
         function updatePreview() {
@@ -1617,10 +1531,9 @@
             return true;
         }
 
-        function sendWhatsApp() {
+        async function sendWhatsApp() {
             if (!validateForm()) return;
 
-            // Generate the actual receipt number for this transaction
             const receiptNo = getNextReceiptNumber();
             document.getElementById('receiptNo').value = receiptNo;
 
@@ -1640,7 +1553,6 @@
                 minute: '2-digit'
             });
 
-            // Save to local storage
             const newRecord = {
                 receiptNo,
                 name,
@@ -1653,19 +1565,24 @@
                 timestamp: Date.now()
             };
 
+            // Save locally
             let history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
             history.unshift(newRecord);
             localStorage.setItem('driving_school_history', JSON.stringify(history));
 
-            // Cloud sync (silent)
-            fetch(googleScriptUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newRecord)
-            }).catch(err => console.log("Cloud sync queued"));
+            // Send to Google Sheets via POST (no-cors mode)
+            try {
+                await fetch(googleScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newRecord)
+                });
+                console.log('Data sent to cloud');
+            } catch (err) {
+                console.log('Cloud send failed, data saved locally:', err);
+            }
 
-            // Compose WhatsApp message
             const message = `🧾 *THANIMA IYKARAYIL MDS*\n` +
                            `_Official Digital Receipt_\n\n` +
                            `📋 *Receipt No:* ${receiptNo}\n` +
@@ -1677,7 +1594,6 @@
                            `✅ _Verified Electronic Statement_\n` +
                            `🏫 Govt Approved Institution`;
 
-            // Open WhatsApp
             const cleanPhone = phone.replace(/\D/g, '');
             const formattedPhone = '91' + cleanPhone;
             window.open(
@@ -1685,9 +1601,9 @@
                 '_blank'
             );
 
-            showToast('Receipt generated & WhatsApp opened!');
+            showToast('Receipt #' + receiptNo + ' generated & WhatsApp opened!');
             updateDashboardStats();
-            updateReceiptNumberDisplay(); // Update display for next receipt
+            updateReceiptNumberDisplay();
             resetFormForNewReceipt();
         }
 
@@ -1707,10 +1623,15 @@
             window.print();
         }
 
-        // Student Archives Functions
+        // ==========================================
+        // STUDENT ARCHIVES FUNCTIONS
+        // ==========================================
         function loadGroupedStudents() {
-            const history = JSON.parse(localStorage.getItem('driving_school_history')) || [];
-            const searchQuery = document.getElementById('historySearch').value.toLowerCase().trim();
+            // Use cloud cache if available, otherwise local
+            let history = cloudDataCache.length > 0 ? cloudDataCache : 
+                         JSON.parse(localStorage.getItem('driving_school_history')) || [];
+            
+            const searchQuery = document.getElementById('historySearch')?.value?.toLowerCase().trim() || '';
             const container = document.getElementById('groupedFoldersContainer');
 
             if (history.length === 0) {
@@ -1719,6 +1640,9 @@
                         <i class="fas fa-archive" style="font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5;"></i>
                         <h3>No Records Yet</h3>
                         <p style="margin-top: 10px;">Start processing payments to build your archive</p>
+                        <button class="btn btn-primary" onclick="syncWithCloud()" style="margin-top: 20px; width: auto; background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);">
+                            <i class="fas fa-cloud-download-alt"></i> Load from Cloud
+                        </button>
                     </div>`;
                 return;
             }
@@ -1751,7 +1675,7 @@
                 container.innerHTML = `
                     <div style="text-align: center; color: var(--text-muted); padding: 40px;">
                         <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
-                        <p>No matching records found for "${searchQuery}"</p>
+                        <p>No matching records found</p>
                     </div>`;
                 return;
             }
@@ -1840,29 +1764,230 @@
         }
 
         function clearAllHistory() {
-            showModal('Are you sure you want to delete ALL payment history? This cannot be undone!', function() {
+            showModal('Are you sure you want to delete ALL payment history? This cannot be undone!', async function() {
+                // Clear local
                 localStorage.removeItem('driving_school_history');
+                
+                // Also try to clear cloud
+                try {
+                    await fetch(googleScriptUrl + '?action=clear', {
+                        method: 'POST',
+                        mode: 'no-cors'
+                    });
+                } catch (e) {}
+                
+                cloudDataCache = [];
                 loadGroupedStudents();
                 updateDashboardStats();
                 showToast('All history cleared successfully');
             });
         }
 
-        // Cloud Sync Functions
-        function fetchSheetsCloudData() {
-            fetch(googleScriptUrl, { method: 'GET', mode: 'no-cors' })
-                .then(response => {
-                    document.getElementById('dbStatusLabel').innerHTML = 
-                        '<i class="fas fa-cloud"></i> Status: Cloud Connection Ready';
-                    document.getElementById('dbStatusLabel').style.color = 'var(--success-green)';
-                })
-                .catch(err => {
-                    console.log("Offline mode active");
-                    document.getElementById('dbStatusLabel').innerHTML = 
-                        '<i class="fas fa-database"></i> Status: Local Mode Active';
-                });
+        // ==========================================
+        // DASHBOARD STATISTICS
+        // ==========================================
+        function updateDashboardStats() {
+            const history = cloudDataCache.length > 0 ? cloudDataCache :
+                           JSON.parse(localStorage.getItem('driving_school_history')) || [];
+            document.getElementById('totalTransactions').textContent = history.length;
+
+            const today = new Date().toLocaleDateString('en-IN');
+            const todayTotal = history
+                .filter(record => record.date === today)
+                .reduce((sum, record) => sum + parseFloat(record.amount || 0), 0);
+            document.getElementById('todayRevenue').textContent = '₹' + todayTotal.toLocaleString('en-IN');
         }
 
+        // ==========================================
+        // COURSE MANAGEMENT
+        // ==========================================
+        function renderCourseMenusUI() {
+            const currentCourses = JSON.parse(localStorage.getItem('driving_school_courses')) || defaultCoursesList;
+            const billingSelect = document.getElementById('course');
+            billingSelect.innerHTML = currentCourses.map(course => 
+                `<option value="${course}">${course}</option>`
+            ).join('');
+
+            const managementList = document.getElementById('courseConfigurationManagerList');
+            managementList.innerHTML = currentCourses.map((course, idx) => `
+                <li class="course-manager-item">
+                    <span><i class="fas fa-graduation-cap" style="margin-right: 8px;"></i>${course}</span>
+                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.85rem;" 
+                            onclick="removeCustomCourseOption(${idx})">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </li>
+            `).join('');
+            updatePreview();
+        }
+
+        function addCustomCourseOption() {
+            const inputField = document.getElementById('newCourseInput');
+            const newTitle = inputField.value.trim();
+            if (!newTitle) {
+                showToast('Please enter a course name', 'error');
+                return;
+            }
+            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
+            if (courses.includes(newTitle)) {
+                showToast('Course already exists!', 'error');
+                return;
+            }
+            courses.push(newTitle);
+            localStorage.setItem('driving_school_courses', JSON.stringify(courses));
+            inputField.value = '';
+            renderCourseMenusUI();
+            showToast('Course added successfully!');
+        }
+
+        function removeCustomCourseOption(indexPosition) {
+            let courses = JSON.parse(localStorage.getItem('driving_school_courses')) || [];
+            if (courses.length <= 1) {
+                showToast('Cannot delete the last course option', 'error');
+                return;
+            }
+            const courseName = courses[indexPosition];
+            showModal(`Are you sure you want to delete "${courseName}"?`, function() {
+                courses.splice(indexPosition, 1);
+                localStorage.setItem('driving_school_courses', JSON.stringify(courses));
+                renderCourseMenusUI();
+                showToast('Course removed successfully');
+            });
+        }
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+        function handleAuthSubmit() {
+            const userInput = document.getElementById('loginUser').value.trim();
+            const passInput = document.getElementById('loginPass').value.trim();
+            const errorLabel = document.getElementById('loginError');
+
+            if (!userInput || !passInput) {
+                errorLabel.innerText = "Please fill in all fields.";
+                errorLabel.style.display = 'block';
+                return;
+            }
+
+            if (userInput === localStorage.getItem('admin_user') && 
+                passInput === localStorage.getItem('admin_pass')) {
+                sessionStorage.setItem('auth_state', 'verified');
+                sessionStorage.setItem('auth_method', 'manual');
+                document.getElementById('loginScreen').style.display = 'none';
+                errorLabel.style.display = 'none';
+                updateDashboardStats();
+                showToast('Welcome back, ' + userInput + '!');
+                syncWithCloud();
+            } else {
+                errorLabel.innerText = "Invalid Operator Credentials.";
+                errorLabel.style.display = 'block';
+                document.getElementById('loginPass').value = '';
+            }
+        }
+
+        function handleLogout() {
+            showModal('Are you sure you want to logout?', function() {
+                sessionStorage.removeItem('auth_state');
+                sessionStorage.removeItem('auth_method');
+                sessionStorage.removeItem('auth_email');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                document.getElementById('googleUserInfo').classList.remove('show');
+                cloudDataCache = [];
+            });
+        }
+
+        function saveSecurityCredentials() {
+            const oldPassInput = document.getElementById('settingsOldPass').value;
+            const newUser = document.getElementById('settingsUser').value.trim();
+            const newPass = document.getElementById('settingsPass').value.trim();
+
+            if (oldPassInput !== localStorage.getItem('admin_pass')) {
+                showToast('Current passcode incorrect!', 'error');
+                return;
+            }
+            if (!newUser || !newPass) {
+                showToast('Fields cannot be blank!', 'error');
+                return;
+            }
+            if (newPass.length < 4) {
+                showToast('Password must be at least 4 characters!', 'error');
+                return;
+            }
+
+            localStorage.setItem('admin_user', newUser);
+            localStorage.setItem('admin_pass', newPass);
+            document.getElementById('settingsOldPass').value = '';
+            document.getElementById('settingsPass').value = '';
+            showToast('Credentials updated successfully!');
+        }
+
+        // ==========================================
+        // TAB NAVIGATION
+        // ==========================================
+        function switchConsoleTab(tabId) {
+            document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+            const tabElement = document.getElementById('tab-' + tabId);
+            const navElement = document.getElementById('nav-' + tabId);
+
+            if (tabElement) tabElement.classList.add('active');
+            if (navElement) navElement.classList.add('active');
+
+            const titles = {
+                'billing': 'Terminal Billing Form',
+                'students': 'Student Payment Archives',
+                'settings': 'System Control Settings'
+            };
+            document.getElementById('topNavTitle').textContent = titles[tabId] || 'Dashboard';
+
+            if (tabId === 'students') {
+                loadGroupedStudents();
+                updateDashboardStats();
+            } else if (tabId === 'settings') {
+                document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
+                document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
+                renderCourseMenusUI();
+            }
+        }
+
+        // ==========================================
+        // TOAST AND MODAL
+        // ==========================================
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderColor = type === 'success' ? 'var(--success-green)' : 'var(--error-red)';
+            toast.innerHTML = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        function showModal(message, confirmCallback) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('modalMessage').textContent = message;
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            confirmBtn.onclick = function() {
+                confirmCallback();
+                closeModal();
+            };
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').classList.remove('active');
+        }
+
+        // ==========================================
+        // RENDER ONLINE INVOICE MODE
+        // ==========================================
         function renderOnlineInvoiceMode(urlParams) {
             const name = urlParams.get('name') || 'Customer';
             const amount = urlParams.get('amount') || '0';
@@ -1873,6 +1998,82 @@
             document.getElementById('previewReceiptNo').innerText = 'Receipt No: ' + receipt;
             document.getElementById('previewDate').innerText = 'Date: ' + new Date().toLocaleDateString('en-IN');
         }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.onload = function() {
+            // Initialize localStorage defaults
+            if (!localStorage.getItem('admin_user')) localStorage.setItem('admin_user', 'Arun9666');
+            if (!localStorage.getItem('admin_pass')) localStorage.setItem('admin_pass', 'A6669n');
+            if (!localStorage.getItem('driving_school_courses')) {
+                localStorage.setItem('driving_school_courses', JSON.stringify(defaultCoursesList));
+            }
+            if (!localStorage.getItem('receipt_counter')) {
+                localStorage.setItem('receipt_counter', '1000');
+            }
+
+            document.getElementById('settingsUser').value = localStorage.getItem('admin_user');
+            document.getElementById('settingsPass').value = localStorage.getItem('admin_pass');
+
+            renderCourseMenusUI();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('bill')) {
+                document.body.classList.add('customer-view-mode');
+                renderOnlineInvoiceMode(urlParams);
+            } else {
+                if (sessionStorage.getItem('auth_state') === 'verified') {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    updateDashboardStats();
+                    updateReceiptNumberDisplay();
+                    updatePreview();
+                    // Load cloud data in background
+                    setTimeout(syncWithCloud, 1000);
+                } else {
+                    document.getElementById('loginScreen').style.display = 'flex';
+                }
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'b':
+                            e.preventDefault();
+                            switchConsoleTab('billing');
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            switchConsoleTab('students');
+                            break;
+                        case ',':
+                            e.preventDefault();
+                            switchConsoleTab('settings');
+                            break;
+                    }
+                }
+            });
+
+            // Enter key for login
+            document.getElementById('loginPass').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleAuthSubmit();
+            });
+
+            document.getElementById('loginUser').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleAuthSubmit();
+            });
+
+            // Enter key for Google auth modal
+            document.getElementById('googleEmailInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') verifyGoogleEmail();
+            });
+
+            // Close modal on overlay click
+            document.getElementById('googleAuthModal').addEventListener('click', function(e) {
+                if (e.target === this) closeGoogleAuthModal();
+            });
+        };
     </script>
 </body>
 </html>
